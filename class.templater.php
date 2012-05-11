@@ -409,8 +409,6 @@ class Templater
 							echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "/{$identifier}<br>");
 							echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "&nbsp;{$current_tag[$depth]}<br>");
 							
-							$current_element[$depth]->content_end = $tag_start;
-							$current_element[$depth]->FetchContents($content);
 						}
 						else
 						{
@@ -452,7 +450,7 @@ class Templater
 		pretty_dump($current_element[0]);
 	}
 	
-	function CreateSyntaxElement($identifier, $statement, $content_start)
+	function CreateSyntaxElement($identifier, $statement)
 	{
 		if($identifier == "if")
 		{
@@ -484,7 +482,6 @@ class Templater
 			$element->right = $statement_parts[2];
 		}
 		
-		$element->content_start = $content_start;
 		return $element;
 	}
 }
@@ -492,16 +489,7 @@ class Templater
 class TemplateSyntaxElement
 {
 	public $parent = null;
-	public $statement = "";
-	public $contents = "";
 	public $children = array();
-	public $content_start = 0;
-	public $content_end = 0;
-	
-	public function FetchContents($original)
-	{
-		//$this->contents = substr($original, $this->content_start, $this->content_end);
-	}
 }
 
 class TemplateRootElement extends TemplateSyntaxElement {}
@@ -513,15 +501,15 @@ class TemplateTextElement extends TemplateSyntaxElement
 
 class TemplateIfElement extends TemplateSyntaxElement
 {
+	public $statement = "";
 	public $left = "";
 	public $right = "";
 	public $operator = "";
-	public $if_block = "";
-	public $else_block = "";
 }
 
 class TemplateForEachElement extends TemplateSyntaxElement
 {
+	public $statement = "";
 	public $source = "";
 	public $varname = "";
 	public $block = "";
