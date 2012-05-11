@@ -24,6 +24,7 @@ class Templater
 	private $tpl_rendered = NULL;
 	public $templatename = "";
 	public $root = null;
+	public $debug_tree = array();
 	
 	public function Load($template)
 	{
@@ -300,6 +301,7 @@ class Templater
 		$current_tag = array();
 		$current_element = array();
 		$current_text_element = null;
+		$debug_tree = array();
 		$root = array();
 		$tag_start = 0;
 		$tag_end = 0;
@@ -399,7 +401,7 @@ class Templater
 					if($type == CPHP_TEMPLATER_TYPE_TAG_OPEN)
 					{
 						// This was an opening tag.
-						echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "{$identifier} {$statement}<br>");
+						$debug_tree[] = "[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "{$identifier} {$statement}";
 						$child = $this->CreateSyntaxElement($identifier, $statement, $offset + 1);
 						$current_element[$depth] = $child;
 						
@@ -422,7 +424,7 @@ class Templater
 						{
 							//echo("Closing tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}]<br>");
 							
-							echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "/{$identifier}<br>");
+							$debug_tree[] = "[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "/{$identifier}";
 							//echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "&nbsp;{$current_tag[$depth]}<br>");
 							
 						}
@@ -443,7 +445,7 @@ class Templater
 				}
 				elseif($char == "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_VARNAME)
 				{
-					echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "var {$name}<br>");
+					$debug_tree[] = "[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "var {$name}";
 					
 					$child = $this->CreateSyntaxElement("variable", $name);
 					
@@ -480,6 +482,7 @@ class Templater
 		}
 		
 		$this->root = $current_element[0];
+		$this->debug_tree = $debug_tree;
 	}
 	
 	function CreateSyntaxElement($identifier, $statement)
