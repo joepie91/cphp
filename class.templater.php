@@ -309,6 +309,7 @@ class Templater
 		define("CPHP_TEMPLATER_SWITCH_TAG_SYNTAX",	3);
 		define("CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER",	4);
 		define("CPHP_TEMPLATER_SWITCH_TAG_STATEMENT",	5);
+		define("CPHP_TEMPLATER_SWITCH_TAG_VARNAME",	6);
 		define("CPHP_TEMPLATER_TYPE_TAG_NONE",		10);
 		define("CPHP_TEMPLATER_TYPE_TAG_OPEN",		11);
 		define("CPHP_TEMPLATER_TYPE_TAG_CLOSE",		12);
@@ -337,8 +338,17 @@ class Templater
 					$current_element[$depth - 1]->children[] = $current_text_element;
 				}
 				
-				$switch = CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER;
-				$identifier = "";
+				// Look ahead to see whether this is going to be a variable or a logic element
+				if($content[$offset + 1] == "?")
+				{
+					$switch = CPHP_TEMPLATER_SWITCH_TAG_VARNAME;
+					$name = "";
+				}
+				else
+				{
+					$switch = CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER;
+					$identifier = "";
+				}
 			}
 			elseif($char != "%" && $switch == CPHP_TEMPLATER_SWITCH_TAG_OPEN)
 			{
@@ -365,6 +375,11 @@ class Templater
 				($char != "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_CLOSE))
 				{
 					$identifier .= $char;
+				}
+				elseif($char != "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_VARNAME)
+				{
+					if($char != "?" || $name != "")
+					$name .= $char;
 				}
 				elseif($char == " " && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_OPEN)
 				{
@@ -407,7 +422,7 @@ class Templater
 							//echo("Closing tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}]<br>");
 							
 							echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "/{$identifier}<br>");
-							echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "&nbsp;{$current_tag[$depth]}<br>");
+							//echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "&nbsp;{$current_tag[$depth]}<br>");
 							
 						}
 						else
@@ -424,6 +439,24 @@ class Templater
 					$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
 					$identifier = "";
 					$statement = "";
+				}
+				elseif($char == "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_VARNAME)
+				{
+					echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "var {$name}<br>");
+					
+					$switch = CPHP_TEMPLATER_SWITCH_NONE;
+					$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
+					$name = "";
+					/*$child = $this->CreateSyntaxElement($identifier, $statement, $offset + 1);
+					$current_element[$depth] = $child;
+					
+					if(isset($current_element[$depth - 1]) && !is_null($current_element[$depth - 1]))
+					{
+						$child->parent = $current_element[$depth - 1];
+						$child->parent->children[] = $current_element[$depth];
+					}
+					
+					$current_tag[$depth] = $identifier;*/
 				}
 				else
 				{
