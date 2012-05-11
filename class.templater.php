@@ -287,6 +287,7 @@ class Templater
 	public function Parse($data)
 	{
 		$tree = $this->BuildSyntaxTree();
+		//pretty_dump($this->root);
 		echo($this->root->Evaluate($data));
 	}
 	
@@ -444,19 +445,17 @@ class Templater
 				{
 					echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "var {$name}<br>");
 					
-					$switch = CPHP_TEMPLATER_SWITCH_NONE;
-					$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
-					$name = "";
-					/*$child = $this->CreateSyntaxElement($identifier, $statement, $offset + 1);
-					$current_element[$depth] = $child;
+					$child = $this->CreateSyntaxElement("variable", $name);
 					
 					if(isset($current_element[$depth - 1]) && !is_null($current_element[$depth - 1]))
 					{
 						$child->parent = $current_element[$depth - 1];
-						$child->parent->children[] = $current_element[$depth];
+						$child->parent->children[] = $child;
 					}
 					
-					$current_tag[$depth] = $identifier;*/
+					$switch = CPHP_TEMPLATER_SWITCH_NONE;
+					$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
+					$name = "";
 				}
 				else
 				{
@@ -497,6 +496,10 @@ class Templater
 		{
 			$element = new TemplateTextElement;
 		}
+		elseif($identifier == "variable")
+		{
+			$element = new TemplateVariableElement;
+		}
 		else
 		{
 			$element = new TemplateRootElement;
@@ -520,6 +523,11 @@ class Templater
 			$statement_parts = explode(" ", $statement, 3);
 			$element->varname = $statement_parts[0];
 			$element->source = $statement_parts[2];
+		}
+		
+		if($identifier == "variable")
+		{
+			$element->variable = $statement;
 		}
 		
 		return $element;
@@ -585,6 +593,16 @@ class TemplateSyntaxElement
 }
 
 class TemplateRootElement extends TemplateSyntaxElement {}
+
+class TemplateVariableElement extends TemplateSyntaxElement
+{
+	public $variable = "";
+	
+	public function Evaluate($data)
+	{
+		return $this->FetchVariable($this->variable, $data);
+	}
+}
 
 class TemplateTextElement extends TemplateSyntaxElement
 {
