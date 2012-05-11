@@ -293,12 +293,14 @@ class Templater
 		$content = $this->tpl_rendered;
 		$length = strlen($content);
 		$offset = 0;
-		$depth = 0;
-		$current_tag = "";
-		$current_element = null;
+		$depth = 1;
+		$current_tag = array();
+		$current_element = array();
+		$current_text_element = null;
 		$root = array();
 		$tag_start = 0;
 		$tag_end = 0;
+		$text_block = "";
 		
 		define("CPHP_TEMPLATER_SWITCH_NONE",		1);
 		define("CPHP_TEMPLATER_SWITCH_TAG_OPEN",	2);
@@ -312,11 +314,12 @@ class Templater
 		$switch = CPHP_TEMPLATER_SWITCH_NONE;
 		$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
 		
+		$current_element[0] = new TemplateRootElement();
+		
 		while($offset < $length)
 		{
 			$char = $content[$offset];
-			//echo("<br><br>");
-			//pretty_dump("**");
+			
 			if($char == "{" && $switch == CPHP_TEMPLATER_SWITCH_NONE)
 			{
 				$switch = CPHP_TEMPLATER_SWITCH_TAG_OPEN;
@@ -324,6 +327,14 @@ class Templater
 			}
 			elseif($char == "%" && $switch == CPHP_TEMPLATER_SWITCH_TAG_OPEN)
 			{
+				if($text_block != "")
+				{
+					$current_text_element->text = $text_block;
+					$text_block = "";
+				
+					$current_element[$depth - 1]->children[] = $current_text_element;
+				}
+				
 				$switch = CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER;
 				$identifier = "";
 			}
@@ -332,60 +343,79 @@ class Templater
 				// Not a templater tag, abort.
 				$switch = CPHP_TEMPLATER_SWITCH_NONE;
 				$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
+				$text_block .= "{";
 			}
 			elseif($switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_NONE)
 			{
 				if($char == "/")
 				{
-					//pretty_dump("close $char {$identifier}");
 					$type = CPHP_TEMPLATER_TYPE_TAG_CLOSE;
 				}
 				else
 				{
-					//pretty_dump("open {$identifier}");
 					$type = CPHP_TEMPLATER_TYPE_TAG_OPEN;
 					continue;
 				}
 			}
 			else
 			{
-				//pretty_dump(">> $char");
-				//pretty_dump(($char != "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_CLOSE));
-				//pretty_dump(($char == "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_CLOSE));
 				if(($char != " " && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_OPEN) ||
 				($char != "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_CLOSE))
 				{
-					//pretty_dump("identifier");
 					$identifier .= $char;
 				}
 				elseif($char == " " && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_OPEN)
 				{
-					//pretty_dump("switch statement");
 					$switch = CPHP_TEMPLATER_SWITCH_TAG_STATEMENT;
 					$statement = "";
 				} 
 				elseif($char != "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_STATEMENT)
 				{
-					//pretty_dump("statement");
 					$statement .= $char;
 				}
 				elseif(($char == "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_STATEMENT && $type == CPHP_TEMPLATER_TYPE_TAG_OPEN) ||
 				($char == "}" && $switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_CLOSE))
 				{
-					//pretty_dump("Identifier: {$identifier}");
-					//pretty_dump("Statement: {$statement}");
-					
-					$tag_end = $offset;
+					$tag_end = $offset + 1;
 					
 					if($type == CPHP_TEMPLATER_TYPE_TAG_OPEN)
 					{
 						// This was an opening tag.
-						echo("Opening tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}], statement [ {$statement} ]<br>");
+						//echo("Opening tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}], statement [ {$statement} ]<br>");
+						echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "{$identifier} {$statement}<br>");
+						$child = $this->CreateSyntaxElement($identifier, $statement, $offset + 1);
+						$current_element[$depth] = $child;
+						
+						if(isset($current_element[$depth - 1]) && !is_null($current_element[$depth - 1]))
+						{
+							$child->parent = $current_element[$depth - 1];
+							$child->parent->children[] = $current_element[$depth];
+						}
+						
+						$current_tag[$depth] = $identifier;
+						
+						$depth += 1;
 					}
 					elseif($type == CPHP_TEMPLATER_TYPE_TAG_CLOSE)
 					{
 						// This was a closing tag.
-						echo("Closing tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}]<br>");
+						//pretty_dump("$current_tag vs $identifier at $tag_start in depth $depth with statement ($statement)");
+						$depth -= 1;
+						
+						if($identifier == $current_tag[$depth])
+						{
+							//echo("Closing tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}]<br>");
+							
+							echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "/{$identifier}<br>");
+							echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "&nbsp;{$current_tag[$depth]}<br>");
+							
+							$current_element[$depth]->content_end = $tag_start;
+							$current_element[$depth]->FetchContents($content);
+						}
+						else
+						{
+							throw new TemplateSyntaxException("Closing tag does not match opening tag (".$current_tag[$depth]." vs. {$identifier}) at position {$tag_start}.", $this->templatename, $tag_start, $tag_end);
+						}
 					}
 					else
 					{
@@ -395,19 +425,90 @@ class Templater
 					$switch = CPHP_TEMPLATER_SWITCH_NONE;
 					$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
 					$identifier = "";
-					$statement = "";
+					//$statement = "";
+				}
+				else
+				{
+					if($text_block == "")
+					{
+						$current_text_element = $this->CreateSyntaxElement("text", "", $offset);
+					}
+					
+					$text_block .= $char;
 				}
 			}
 			
 			$offset += 1;
 		}
+		
+		if($text_block != "")
+		{
+			$current_text_element->text = $text_block;
+			$text_block = "";
+		
+			$current_element[0]->children[] = $current_text_element;
+		}
+		
+		pretty_dump($current_element[0]);
+	}
+	
+	function CreateSyntaxElement($identifier, $statement, $content_start)
+	{
+		if($identifier == "if")
+		{
+			$element = new TemplateIfElement;
+		}
+		elseif($identifier == "foreach")
+		{
+			$element = new TemplateForEachElement;
+		}
+		elseif($identifier == "text")
+		{
+			$element = new TemplateTextElement;
+		}
+		else
+		{
+			$element = new TemplateRootElement;
+		}
+		
+		if($identifier == "if" || $identifier == "foreach")
+		{
+			$element->statement = $statement;
+		}
+		
+		if($identifier == "if")
+		{
+			$statement_parts = explode(" ", $statement, 3);
+			$element->left = $statement_parts[0];
+			$element->operator = $statement_parts[1];
+			$element->right = $statement_parts[2];
+		}
+		
+		$element->content_start = $content_start;
+		return $element;
 	}
 }
 
 class TemplateSyntaxElement
 {
 	public $parent = null;
+	public $statement = "";
+	public $contents = "";
 	public $children = array();
+	public $content_start = 0;
+	public $content_end = 0;
+	
+	public function FetchContents($original)
+	{
+		//$this->contents = substr($original, $this->content_start, $this->content_end);
+	}
+}
+
+class TemplateRootElement extends TemplateSyntaxElement {}
+
+class TemplateTextElement extends TemplateSyntaxElement
+{
+	public $text = "";
 }
 
 class TemplateIfElement extends TemplateSyntaxElement
@@ -417,4 +518,11 @@ class TemplateIfElement extends TemplateSyntaxElement
 	public $operator = "";
 	public $if_block = "";
 	public $else_block = "";
+}
+
+class TemplateForEachElement extends TemplateSyntaxElement
+{
+	public $source = "";
+	public $varname = "";
+	public $block = "";
 }
