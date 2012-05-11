@@ -82,6 +82,8 @@ class Templater
 		}
 	}
 	
+	/* Legacy parser code */
+	
 	public function Compile($strings)
 	{
 		global $template_global_vars;
@@ -275,6 +277,8 @@ class Templater
 		return $template->Render();
 	}
 	
+	/* New parser code */
+	
 	public static function AdvancedParse($templatename, $localize = array(), $compile = array())
 	{		
 		$template = new Templater();
@@ -422,10 +426,7 @@ class Templater
 						
 						if($identifier == $current_tag[$depth])
 						{
-							//echo("Closing tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}]<br>");
-							
 							$debug_tree[] = "[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "/{$identifier}";
-							//echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "&nbsp;{$current_tag[$depth]}<br>");
 							
 						}
 						else
@@ -536,6 +537,8 @@ class Templater
 		return $element;
 	}
 }
+
+/* Syntax element definitions */
 
 class TemplateSyntaxElement
 {
