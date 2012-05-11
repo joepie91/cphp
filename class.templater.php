@@ -23,6 +23,7 @@ class Templater
 	private $tpl = NULL;
 	private $tpl_rendered = NULL;
 	public $templatename = "";
+	public $root = null;
 	
 	public function Load($template)
 	{
@@ -280,12 +281,13 @@ class Templater
 		$template->Load($templatename);
 		$template->Localize($localize);
 		$template->Parse($compile);
-		return $template->Render();
+		//return $template->Render();
 	}
 	
-	public function Parse($strings)
+	public function Parse($data)
 	{
 		$tree = $this->BuildSyntaxTree();
+		echo($this->root->Evaluate($data));
 	}
 	
 	public function BuildSyntaxTree()
@@ -381,7 +383,6 @@ class Templater
 					if($type == CPHP_TEMPLATER_TYPE_TAG_OPEN)
 					{
 						// This was an opening tag.
-						//echo("Opening tag found, start position [{$tag_start}], end position [{$tag_end}], identifier [{$identifier}], statement [ {$statement} ]<br>");
 						echo("[{$depth}]" . str_repeat("&nbsp;&nbsp;&nbsp;", $depth) . "{$identifier} {$statement}<br>");
 						$child = $this->CreateSyntaxElement($identifier, $statement, $offset + 1);
 						$current_element[$depth] = $child;
@@ -399,7 +400,6 @@ class Templater
 					elseif($type == CPHP_TEMPLATER_TYPE_TAG_CLOSE)
 					{
 						// This was a closing tag.
-						//pretty_dump("$current_tag vs $identifier at $tag_start in depth $depth with statement ($statement)");
 						$depth -= 1;
 						
 						if($identifier == $current_tag[$depth])
@@ -423,7 +423,7 @@ class Templater
 					$switch = CPHP_TEMPLATER_SWITCH_NONE;
 					$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
 					$identifier = "";
-					//$statement = "";
+					$statement = "";
 				}
 				else
 				{
@@ -447,7 +447,7 @@ class Templater
 			$current_element[0]->children[] = $current_text_element;
 		}
 		
-		pretty_dump($current_element[0]);
+		$this->root = $current_element[0];
 	}
 	
 	function CreateSyntaxElement($identifier, $statement)
@@ -497,6 +497,58 @@ class TemplateSyntaxElement
 {
 	public $parent = null;
 	public $children = array();
+	public $data = array();
+	
+	public function Evaluate($data)
+	{
+		$result = "";
+		
+		foreach($this->children as $child)
+		{
+			$result .= $child->Evaluate($data);
+		}
+		
+		return $result;
+	}
+	
+	public function FetchVariable($name, $data)
+	{
+		if(strpos($name, "[") === false)
+		{
+			return $data[$name];
+		}
+		else
+		{
+			// Variable refers to a subset of the data, traverse up the tree to find the matching dataset
+			$open_brace = strpos($name, "[");
+			$closing_brace = strpos($name, "]");
+			
+			$source = substr($name, 0, $open_brace);
+			$item = substr($name, $open_brace + 1, ($closing_brace - $open_brace - 1));
+			
+			$current_element = $this;
+			
+			while(!is_null($current_element))
+			{
+				$current_element = $current_element->parent;
+				
+				if(isset($current_element->varname))
+				{
+					if($current_element->varname == $source)
+					{
+						if(isset($current_element->data[$item]))
+						{
+							return $current_element->data[$item];
+						}
+						else
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 class TemplateRootElement extends TemplateSyntaxElement {}
@@ -504,6 +556,11 @@ class TemplateRootElement extends TemplateSyntaxElement {}
 class TemplateTextElement extends TemplateSyntaxElement
 {
 	public $text = "";
+	
+	public function Evaluate($data)
+	{
+		return $this->text;
+	}
 }
 
 class TemplateIfElement extends TemplateSyntaxElement
@@ -512,6 +569,42 @@ class TemplateIfElement extends TemplateSyntaxElement
 	public $left = "";
 	public $right = "";
 	public $operator = "";
+	
+	public function Evaluate($data)
+	{
+		$a = $this->FetchVariable($this->left, $data);
+		$b = $this->right;
+		
+		switch($this->operator)
+		{
+			case "=":
+			case "==":
+				$result = ($a == $b);
+				break;
+			case ">":
+				$result = ($a > $b);
+				break;
+			case "<":
+				$result = ($a < $b);
+				break;
+			case ">=":
+				$result = ($a >= $b);
+				break;
+			case "<=":
+				$result = ($a <= $b);
+				break;
+			case "!=":
+				$result = ($a != $b);
+				break;
+			default:
+				$result = false;
+		}
+		
+		if($result == true)
+		{
+			return parent::Evaluate($data);
+		}
+	}
 }
 
 class TemplateForEachElement extends TemplateSyntaxElement
@@ -520,4 +613,24 @@ class TemplateForEachElement extends TemplateSyntaxElement
 	public $source = "";
 	public $varname = "";
 	public $block = "";
+	public $data = array();
+	
+	public function Evaluate($data)
+	{
+		$target = $this->FetchVariable($this->source, $data);
+		
+		$result = "";
+		
+		foreach($target as $iteration)
+		{
+			$this->data = $iteration;
+			
+			foreach($this->children as $child)
+			{
+				$result .= $child->Evaluate($data);
+			}
+		}
+		
+		return $result;
+	}
 }
