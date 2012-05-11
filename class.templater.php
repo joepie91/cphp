@@ -482,6 +482,13 @@ class Templater
 			$element->right = $statement_parts[2];
 		}
 		
+		if($identifier == "foreach")
+		{
+			$statement_parts = explode(" ", $statement, 3);
+			$element->varname = $statement_parts[0];
+			$element->source = $statement_parts[2];
+		}
+		
 		return $element;
 	}
 }
