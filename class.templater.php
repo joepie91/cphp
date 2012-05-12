@@ -285,15 +285,13 @@ class Templater
 		$template->templatename = $template->basedir . $templatename . $template->extension;;
 		$template->Load($templatename);
 		$template->Localize($localize);
-		$template->Parse($compile);
-		//return $template->Render();
+		return $template->Parse($compile);
 	}
 	
 	public function Parse($data)
 	{
 		$tree = $this->BuildSyntaxTree();
-		//pretty_dump($this->root);
-		echo($this->root->Evaluate($data));
+		return $this->root->Evaluate($data);
 	}
 	
 	public function BuildSyntaxTree()
