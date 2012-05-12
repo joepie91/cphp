@@ -67,13 +67,10 @@ class Templater
 	{
 		if(!is_null($this->tpl))
 		{
-			preg_match_all("/<%!([a-zA-Z0-9_-]+)>/", $this->tpl_rendered, $strlist);
-			foreach($strlist[1] as $str)
+			foreach($strings as $key => $str)
 			{
-				if(isset($strings[$str]))
-				{
-					$this->tpl_rendered = str_replace("<%!{$str}>", $strings[$str], $this->tpl_rendered);
-				}
+				$this->tpl_rendered = str_replace("<%!{$key}>", $str, $this->tpl_rendered);
+				$this->tpl_rendered = str_replace("{%!{$key}}", $str, $this->tpl_rendered);
 			}
 		}
 		else
