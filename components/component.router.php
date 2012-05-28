@@ -65,8 +65,52 @@ class CPHPRouter extends CPHPBaseClass
 					$regex = str_replace("/", "\/", $route_regex);
 					if(preg_match("/{$regex}/i", $requestpath, $matches))
 					{
+						if(is_array($route_destination))
+						{
+							// Options were provided.
+							if(!isset($route_destination['target']))
+							{
+								throw new InvalidArgumentException("Target is missing from CPHPRoute options element.");
+							}
+							
+							if(!isset($route_destination['authenticator']))
+							{
+								$authenticated = true;
+							}
+							else
+							{
+								if(!isset($route_destination['auth_error']))
+								{
+									throw new InvalidArgumentException("When specifying an authenticator, you must also specify a default error destination.");
+								}
+								
+								$sRouterAuthenticated = false;
+								$sRouterErrorDestination = $route_destination['auth_error'];
+								
+								require($route_destination['authenticator']);
+								
+								if($sRouterAuthenticated === true)
+								{
+									$authenticated = true;
+								}
+							}
+							
+							if($authenticated === true)
+							{
+								$destination = $route_destination['target'];
+							}
+							else
+							{
+								$destination = $sRouterErrorDestination;
+							}
+						}
+						else
+						{
+							$destination = $route_destination;
+						}
+						
 						$this->uParameters = $matches;
-						include($route_destination);
+						include($destination);
 						$found = true;
 					}
 				}
