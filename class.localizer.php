@@ -22,6 +22,7 @@ class Localizer
 	public $date_short = "";
 	public $date_long = "";
 	public $time = "";
+	public $name = "";
 	
 	public function Load($locale)
 	{
@@ -70,6 +71,8 @@ class Localizer
 					}
 				}
 			}
+			
+			$this->name = $locale;
 		}
 		else
 		{
