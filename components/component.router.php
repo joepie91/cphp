@@ -17,7 +17,7 @@ class CPHPRouter extends CPHPBaseClass
 {
 	public $routes = array();
 	public $parameters = array();
-	public $sVariables = array();
+	public $uVariables = array();
 	public $custom_query = "";
 	public $allow_slash = false;
 	public $ignore_query = false;
@@ -101,7 +101,7 @@ class CPHPRouter extends CPHPBaseClass
 								if(strlen($key) > 1 && substr($key, 0, 1) == "_")
 								{
 									$key = substr($key, 1);
-									$this->sVariables[$key] = $value;
+									$this->uVariables[$key] = $value;
 								}
 							}
 							
