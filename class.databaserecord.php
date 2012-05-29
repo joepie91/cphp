@@ -168,10 +168,6 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 						$value = (empty($original_value)) ? false : true;
 						$variable_type = CPHP_VARIABLE_SAFE;
 						break;
-					case "user":
-						$value = new User($original_value);
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
 					case "none":
 						$value = $original_value;
 						$variable_type = CPHP_VARIABLE_UNSAFE;
