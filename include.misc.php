@@ -145,8 +145,3 @@ function hex_from_rgb($rgb)
 		return false;
 	}
 }
-
-/*function is_empty($variable)
-{
-	return (trim($variable) == "");
-}*/
