@@ -114,6 +114,38 @@ function pretty_dump($input)
 	echo($output);
 }
 
+function rgb_from_hex($hex)
+{
+	if(strlen($hex) == 6)
+	{
+		$r = substr($hex, 0, 2);
+		$g = substr($hex, 2, 2);
+		$b = substr($hex, 4, 2);
+		
+		$rgb['r'] = base_convert($r, 16, 10);
+		$rgb['g'] = base_convert($g, 16, 10);
+		$rgb['b'] = base_convert($b, 16, 10);
+		
+		return $rgb;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+function hex_from_rgb($rgb)
+{
+	if(!empty($rgb['r']) && !empty($rgb['g']) && !empty($rgb['b']))
+	{
+		return base_convert($rgb['r'], 10, 16) . base_convert($rgb['g'], 10, 16) . base_convert($rgb['b'], 10, 16);
+	}
+	else
+	{
+		return false;
+	}
+}
+
 /*function is_empty($variable)
 {
 	return (trim($variable) == "");
