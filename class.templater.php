@@ -627,6 +627,15 @@ class TemplateIfElement extends TemplateSyntaxElement
 		$a = $this->FetchVariable($this->left, $data);
 		$b = $this->right;
 		
+		if($b == "true")
+		{
+			$b = true;
+		}
+		elseif($b == "false")
+		{
+			$b = false;
+		}
+		
 		switch($this->operator)
 		{
 			case "=":
