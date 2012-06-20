@@ -66,6 +66,8 @@ class CPHPRouter extends CPHPBaseClass
 					$regex = str_replace("/", "\/", $route_regex);
 					if(preg_match("/{$regex}/i", $requestpath, $matches))
 					{
+						$this->uParameters = $matches;
+						
 						if(is_array($route_destination))
 						{
 							// Options were provided.
@@ -119,7 +121,6 @@ class CPHPRouter extends CPHPBaseClass
 							$destination = $route_destination;
 						}
 						
-						$this->uParameters = $matches;
 						include($destination);
 						$found = true;
 					}
