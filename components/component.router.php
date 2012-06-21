@@ -42,6 +42,9 @@ class CPHPRouter extends CPHPBaseClass
 			}
 		}
 		
+		// Save request path in Router object to make it accessible to other scripts.
+		$this->uRequestPath = $requestpath;
+		
 		if($this->ignore_query === true)
 		{
 			if(strpos($requestpath, "?") !== false)
