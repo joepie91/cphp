@@ -63,7 +63,14 @@ class CPHPRouter extends CPHPBaseClass
 				{
 					if($this->allow_slash === true)
 					{
-						$route_regex = "{$route_regex}/?";
+						if(strpos($route_regex, "$") !== false)
+						{
+							$route_regex = str_replace("$", "/?$", $route_regex);
+						}
+						else
+						{
+							$route_regex = "{$route_regex}/?";
+						}
 					}
 					
 					$regex = str_replace("/", "\/", $route_regex);
