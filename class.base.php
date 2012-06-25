@@ -19,6 +19,8 @@ class CPHPBaseClass
 	
 	public function RenderTimeAgo($template, $property)
 	{
+		/* DEPRECATED: Please do not use this function if you can avoid it. 
+		 * A function offering similar functionality will be added soon. */
 		global $locale;
 		
 		$variable_name = "s{$property}";
@@ -130,11 +132,18 @@ class CPHPBaseClass
 	
 	public function RenderTemplateExternal($template, $strings)
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Instead, you can use Templater::AdvancedParse for rendering arbitrary templates
+		 * without instantiating a Templater yourself. */
 		return $this->DoRenderTemplate($template, $strings);
 	}
 	
 	public function DoRenderTemplate($template, $strings)
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Class-specific templater functions have been discontinued. Instead, you can use
+		 * Templater::AdvancedParse for rendering templates without instantiating a Templater
+		 * yourself. */
 		global $locale;
 		
 		try

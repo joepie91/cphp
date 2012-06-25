@@ -93,6 +93,9 @@ class Templater
 	
 	public function Compile($strings)
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Instead, use the AdvancedParse function, which implements the new
+		 * template parser with advanced syntax. */
 		global $template_global_vars;
 		
 		if(!is_null($this->tpl))
@@ -119,6 +122,9 @@ class Templater
 	
 	public function ParseForEach($source, $data)
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Instead, use the AdvancedParse function, which implements the new
+		 * template parser with advanced syntax. */
 		$templater = $this;
 		
 		return preg_replace_callback("/<%foreach ([a-z0-9_-]+) in ([a-z0-9_-]+)>(.*?)<%\/foreach>/si", function($matches) use($data, $templater) {
@@ -152,6 +158,9 @@ class Templater
 	
 	public function ParseIf($source, $data, $context = null, $identifier = "")
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Instead, use the AdvancedParse function, which implements the new
+		 * template parser with advanced syntax. */
 		return preg_replace_callback("/<%if ([][a-z0-9_-]+) (=|==|>|<|>=|<=|!=) ([^>]+)>(.*?)<%\/if>/si", function($matches) use($data, $context, $identifier) {
 			$variable_name = $matches[1];
 			$operator = $matches[2];
@@ -253,6 +262,9 @@ class Templater
 	
 	public function Render()
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Instead, use the AdvancedParse function, which implements the new
+		 * template parser with advanced syntax. */
 		if(!is_null($this->tpl))
 		{
 			return $this->tpl_rendered;
@@ -265,6 +277,9 @@ class Templater
 	
 	public function Output()
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Instead, use the AdvancedParse function, which implements the new
+		 * template parser with advanced syntax. */
 		if(!is_null($this->tpl))
 		{
 			echo($this->tpl_rendered);
@@ -277,6 +292,9 @@ class Templater
 	
 	public static function InlineRender($templatename, $localize = array(), $compile = array())
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Instead, use the AdvancedParse function, which implements the new
+		 * template parser with advanced syntax. */
 		$template = new Templater();
 		$template->Load($templatename);
 		$template->Localize($localize);
