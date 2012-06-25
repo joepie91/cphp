@@ -145,3 +145,41 @@ function hex_from_rgb($rgb)
 		return false;
 	}
 }
+
+function strip_tags_attr($string, $allowtags = NULL, $allowattributes = NULL)
+{ 
+	/* Thanks to nauthiz693@gmail.com (http://www.php.net/manual/en/function.strip-tags.php#91498) */
+	$string = strip_tags($string,$allowtags);
+	
+	if (!is_null($allowattributes)) 
+	{ 
+		if(!is_array($allowattributes)) 
+		{
+			$allowattributes = explode(",",$allowattributes); 
+		}
+
+		if(is_array($allowattributes)) 
+		{
+			$allowattributes = implode(")(?<!",$allowattributes); 
+		}
+
+		if (strlen($allowattributes) > 0) 
+		{
+			$allowattributes = "(?<!".$allowattributes.")"; 
+		}
+
+		$string = preg_replace_callback("/<[^>]*>/i",create_function('$matches', 'return preg_replace("/ [^ =]*'.$allowattributes.'=(\"[^\"]*\"|\'[^\']*\')/i", "", $matches[0]);'),$string); 
+	} 
+	
+	return $string; 
+} 
+
+function filter_html($input)
+{
+	return strip_tags_attr($input, "<a><b><i><u><span><div><p><img><br><hr><font><ul><li><ol><dt><dd><h1><h2><h3><h4><h5><h6><h7><del><map><area><strong><em><big><small><sub><sup><ins><pre><blockquote><cite><q><center><marquee><table><tr><td><th>", "href,src,alt,class,style,align,valign,color,face,size,width,height,shape,coords,target,border,cellpadding,cellspacing,colspan,rowspan");
+}
+
+function filter_html_strict($input)
+{
+	return strip_tags_attr($input, "<strong><em><br><hr><img><a><span><p><div>", "src,href,style");
+}
