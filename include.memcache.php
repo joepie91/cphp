@@ -30,7 +30,7 @@ if($cphp_memcache_enabled)
 
 function mc_get($key)
 {
-	global $cphp_memcache_enabled, $cphp_memcache_connected, $memcache;
+	global $cphp_memcache_enabled, $cphp_memcache_connected, $cphp_memcache;
 	
 	if($cphp_memcache_enabled === false || $cphp_memcache_connected === false)
 	{
