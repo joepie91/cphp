@@ -183,3 +183,23 @@ function filter_html_strict($input)
 {
 	return strip_tags_attr($input, "<strong><em><br><hr><img><a><span><p><div>", "src,href,style");
 }
+
+function parse_rss($url)
+{
+	$rss = new DOMDocument();
+	$rss->load($url);
+	
+	$items = array();
+	
+	foreach($rss->getElementsByTagName('item') as $item)
+	{
+		$items[] = array(
+			'title'		=> $item->getElementsByTagName('title')->item(0)->nodeValue,
+			'description'	=> $item->getElementsByTagName('description')->item(0)->nodeValue,
+			'url'		=> $item->getElementsByTagName('link')->item(0)->nodeValue,
+			'date'		=> strtotime($item->getElementsByTagName('pubDate')->item(0)->nodeValue)
+		);
+	}
+	
+	return $items;
+}
