@@ -32,7 +32,10 @@ $locale->Load($cphp_locale_name);
 
 setlocale(LC_ALL, $locale->locale);
 
-header('Content-Type:text/html; charset=UTF-8');
+if(empty($not_html))
+{
+	header("Content-Type:text/html; charset=UTF-8");
+}
 
 require("class.base.php");
 require("class.databaserecord.php");
