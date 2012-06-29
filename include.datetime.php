@@ -178,3 +178,101 @@ function floor_to_day($timestamp)
 {
 	return floor($timestamp / (60 * 60 * 24)) * (60 * 60 * 24);
 }
+
+function time_ago($timestamp, $locale)
+{
+	if(is_numeric($timestamp))
+	{
+		if($timestamp > time())
+		{
+			$sTimeAgo = $locale->strings['event-future'];
+		}
+		elseif($timestamp == time())
+		{
+			$sTimeAgo = $locale->strings['event-now'];
+		}
+		else
+		{
+			$date1 = new DateTime("@{$timestamp}", new DateTimeZone("GMT"));
+			$date2 = new DateTime("now", new DateTimeZone("GMT"));
+			
+			$interval = $date1->diff($date2);
+			$years = (int)$interval->format("%G"); 
+			$months = (int)$interval->format("%m"); 
+			$weeks = (int)$interval->format("%U"); 
+			$days = (int)$interval->format("%d"); 
+			$hours = (int)$interval->format("%H");
+			$minutes = (int)$interval->format("%i");
+			$seconds = (int)$interval->format("%S");
+			
+			if($years > 1)
+			{
+				$sTimeAgo = sprintf($locale->strings['event-years-ago'], $years);
+			}
+			elseif($years == 1)
+			{
+				$sTimeAgo = $locale->strings['event-1year-ago'];
+			}
+			elseif($months > 1)
+			{
+				$sTimeAgo = sprintf($locale->strings['event-months-ago'], $months);
+			}
+			elseif($months == 1)
+			{
+				$sTimeAgo = $locale->strings['event-1month-ago'];
+			}
+			elseif($weeks > 1)
+			{
+				$sTimeAgo = sprintf($locale->strings['event-weeks-ago'], $weeks);
+			}
+			elseif($weeks == 1)
+			{
+				$sTimeAgo = $locale->strings['event-1week-ago'];
+			}
+			elseif($days > 1)
+			{
+				$sTimeAgo = sprintf($locale->strings['event-days-ago'], $days);
+			}
+			elseif($days == 1)
+			{
+				$sTimeAgo = $locale->strings['event-1day-ago'];
+			}
+			elseif($hours > 1)
+			{
+				$sTimeAgo = sprintf($locale->strings['event-hours-ago'], $hours);
+			}
+			elseif($hours == 1)
+			{
+				$sTimeAgo = $locale->strings['event-1hour-ago'];
+			}
+			elseif($minutes > 1)
+			{
+				$sTimeAgo = sprintf($locale->strings['event-minutes-ago'], $minutes);
+			}
+			elseif($minutes == 1)
+			{
+				$sTimeAgo = $locale->strings['event-1minute-ago'];
+			}
+			elseif($seconds > 1)
+			{
+				$sTimeAgo = sprintf($locale->strings['event-seconds-ago'], $seconds);
+			}
+			elseif($seconds == 1)
+			{
+				$sTimeAgo = $locale->strings['event-1second-ago'];
+			}
+			else
+			{
+				/* If you see this, there's probably something wrong. */
+				$sTimeAgo = $locale->strings['event-past'];
+			}
+			
+		}
+		
+		return $sTimeAgo;
+	}
+	else
+	{
+		throw new Exception("The given timestamp is not numeric. Timestamps must be provided in Unix timestamp format.");
+	}
+}
