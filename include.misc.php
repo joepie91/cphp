@@ -174,6 +174,25 @@ function strip_tags_attr($string, $allowtags = NULL, $allowattributes = NULL)
 	return $string; 
 }
 
+function cut_text($input, $length)
+{
+	if(strlen($input) > $length)
+	{
+		if(preg_match("/^(.{0,{$length}})\W/s", $input, $matches))
+		{
+			return $matches[1] . "...";
+		}
+		else
+		{
+			return "";
+		}
+	}
+	else
+	{
+		return $input;
+	}
+}
+
 function cut_text($value, $length)
 {
 	/* Thanks to highstrike at gmail dot com (http://www.php.net/manual/en/function.substr.php#80247) */
