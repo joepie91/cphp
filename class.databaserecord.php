@@ -72,6 +72,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			else
 			{
 				$bind_datasets = false;
+				$this->FillDefaults();
 			}
 		}
 		elseif(is_object($uDataSource))
@@ -206,6 +207,36 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		{
 			$classname = get_class($this);
 			throw new Exception("Invalid dataset passed on to {$classname}.BindDataset."); 
+		}
+	}
+	
+	public function FillDefaults()
+	{
+		foreach($this->prototype as $type => $dataset)
+		{
+			switch($type)
+			{
+				case "string":
+					$default_value = "";
+					break;
+				case "numeric":
+					$default_value = 0;
+					break;
+				case "boolean":
+					$default_value = false;
+					break;
+				case "timestamp":
+					$default_value = 0;
+					break;
+				default:
+					continue 2;
+			}
+			
+			foreach($dataset as $property)
+			{
+				$variable_name = "s" . $property;
+				$this->$variable_name = $default_value;
+			}
 		}
 	}
 	
