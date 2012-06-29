@@ -172,7 +172,49 @@ function strip_tags_attr($string, $allowtags = NULL, $allowattributes = NULL)
 	} 
 	
 	return $string; 
-} 
+}
+
+function cut_text($value, $length)
+{
+	/* Thanks to highstrike at gmail dot com (http://www.php.net/manual/en/function.substr.php#80247) */
+	if(is_array($value)) list($string, $match_to) = $value;
+	else { $string = $value; $match_to = $value{0}; }
+
+	$match_start = stristr($string, $match_to);
+	$match_compute = strlen($string) - strlen($match_start);
+
+	if (strlen($string) > $length)
+	{
+		if ($match_compute < ($length - strlen($match_to)))
+		{
+			$pre_string = substr($string, 0, $length);
+			$pos_end = strrpos($pre_string, " ");
+			if($pos_end === false) $string = $pre_string."...";
+			else $string = substr($pre_string, 0, $pos_end)."...";
+		}
+		else if ($match_compute > (strlen($string) - ($length - strlen($match_to))))
+		{
+			$pre_string = substr($string, (strlen($string) - ($length - strlen($match_to))));
+			$pos_start = strpos($pre_string, " ");
+			$string = "...".substr($pre_string, $pos_start);
+			if($pos_start === false) $string = "...".$pre_string;
+			else $string = "...".substr($pre_string, $pos_start);
+		}
+		else
+		{        
+			$pre_string = substr($string, ($match_compute - round(($length / 3))), $length);
+			$pos_start = strpos($pre_string, " "); $pos_end = strrpos($pre_string, " ");
+			$string = "...".substr($pre_string, $pos_start, $pos_end)."...";
+			if($pos_start === false && $pos_end === false) $string = "...".$pre_string."...";
+			else $string = "...".substr($pre_string, $pos_start, $pos_end)."...";
+		}
+
+		$match_start = stristr($string, $match_to);
+		$match_compute = strlen($string) - strlen($match_start);
+	}
+
+	return $string;
+}
 
 function filter_html($input)
 {
