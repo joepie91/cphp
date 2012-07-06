@@ -28,9 +28,9 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public $sId = 0;
 	
-	public function __construct($uDataSource)
+	public function __construct($uDataSource, $defaultable = null)
 	{
-		$this->ConstructDataset($uDataSource);
+		$this->ConstructDataset($uDataSource, $defaultable);
 		$this->EventConstructed();
 	}
 	
@@ -40,7 +40,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		$this->ConstructDataset($this->sId);
 	}
 	
-	public function ConstructDataset($uDataSource)
+	public function ConstructDataset($uDataSource, $defaultable)
 	{
 		$bind_datasets = true;
 		
@@ -107,7 +107,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			
 			foreach($this->prototype as $type => $dataset)
 			{
-				$this->BindDataset($type, $dataset);
+				$this->BindDataset($type, $dataset, $defaultable);
 			}
 			
 			$this->sFound = true;
@@ -118,7 +118,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		}
 	}
 	
-	public function BindDataset($type, $dataset)
+	public function BindDataset($type, $dataset, $defaultable)
 	{
 		global $cphp_class_map;
 		
@@ -174,8 +174,15 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 								}
 								catch (NotFoundException $e)
 								{
-									$e->field = $variable_name;
-									throw $e;
+									if(in_array($variable_name, $defaultable))
+									{
+										// Set to default value
+									}
+									else
+									{
+										$e->field = $variable_name;
+										throw $e;
+									}
 								}
 								$variable_type = CPHP_VARIABLE_SAFE;
 								$found = true;
