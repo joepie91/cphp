@@ -174,7 +174,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 								}
 								catch (NotFoundException $e)
 								{
-									if(in_array($variable_name, $defaultable))
+									if(is_array($defaultable) && in_array($variable_name, $defaultable))
 									{
 										// Set to default value
 									}
