@@ -60,7 +60,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 					else
 					{
 						$classname = get_class($this);
-						throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.");
+						throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.", 0, null, "");
 					}
 				}
 				else
@@ -179,7 +179,15 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 						{
 							if($type == $class_type)
 							{
-								$value = new $class_name($original_value);
+								try
+								{
+									$value = new $class_name($original_value);
+								}
+								catch (NotFoundException $e)
+								{
+									$e->field = $variable_name;
+									throw $e;
+								}
 								$variable_type = CPHP_VARIABLE_SAFE;
 								$found = true;
 							}

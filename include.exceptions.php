@@ -15,7 +15,6 @@ if($_CPHP !== true) { die(); }
 
 class OwnershipException extends Exception {}
 class UserAccessException extends Exception {}
-class NotFoundException extends Exception {}
 class PrototypeException extends Exception {}
 class ConstructorException extends Exception {}
 class MissingDataException extends Exception {}
@@ -36,6 +35,16 @@ class TemplateException extends Exception
 		$this->file = $file;
 		$this->startpos = $startpos;
 		$this->endpos = $endpos;
+	}
+}
+
+class NotFoundException extends Exception 
+{
+	public function __construct($message, $code = 0, $previous = null, $field =  "")
+	{
+		$this->field = $field;
+		
+		parent::__construct($message, $code, $previous);
 	}
 }
 
