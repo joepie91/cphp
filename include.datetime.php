@@ -197,13 +197,13 @@ function time_ago($timestamp, $locale)
 			$date2 = new DateTime("now", new DateTimeZone("GMT"));
 			
 			$interval = $date1->diff($date2);
-			$years = (int)$interval->format("%G"); 
-			$months = (int)$interval->format("%m"); 
+			$years = (int)$interval->y;
+			$months = (int)$interval->m; 
 			$weeks = (int)$interval->format("%U"); 
-			$days = (int)$interval->format("%d"); 
-			$hours = (int)$interval->format("%H");
-			$minutes = (int)$interval->format("%i");
-			$seconds = (int)$interval->format("%S");
+			$days = (int)$interval->d; 
+			$hours = (int)$interval->h;
+			$minutes = (int)$interval->i;
+			$seconds = (int)$interval->s;
 			
 			if($years > 1)
 			{
