@@ -40,7 +40,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		$this->ConstructDataset($this->sId);
 	}
 	
-	public function ConstructDataset($uDataSource, $uCommunityId = 0)
+	public function ConstructDataset($uDataSource)
 	{
 		$bind_datasets = true;
 		
@@ -115,17 +115,6 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		else
 		{
 			$this->sFound = false;
-		}
-		
-		if(!empty($uCommunityId) && !empty($this->sCommunityId))
-		{
-			$sCommunityId = (is_numeric($uCommunityId)) ? $uCommunityId : 0;
-			
-			if($sCommunityId != $this->sCommunity->sId)
-			{
-				$classname = get_class($this);
-				throw new OwnershipException("{$classname} {$this->sId} does not belong to Community {$sCommunityId}.");
-			}
 		}
 	}
 	
