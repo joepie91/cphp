@@ -221,16 +221,20 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			switch($type)
 			{
 				case "string":
-					$default_value = "";
+					$safe_default_value = "";
+					$unsafe_default_value = "";
 					break;
 				case "numeric":
-					$default_value = 0;
+					$safe_default_value = 0;
+					$unsafe_default_value = "0";
 					break;
 				case "boolean":
-					$default_value = false;
+					$safe_default_value = false;
+					$unsafe_default_value = "0";
 					break;
 				case "timestamp":
-					$default_value = 0;
+					$safe_default_value = 0;
+					$unsafe_default_value = "1970-01-01 12:00:00";
 					break;
 				default:
 					continue 2;
@@ -238,8 +242,11 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			
 			foreach($dataset as $property)
 			{
-				$variable_name = "s" . $property;
-				$this->$variable_name = $default_value;
+				$safe_variable_name = "s" . $property;
+				$this->$safe_variable_name = $safe_default_value;
+				
+				$unsafe_variable_name = "u" . $property;
+				$this->$unsafe_variable_name = $unsafe_default_value;
 			}
 		}
 	}
