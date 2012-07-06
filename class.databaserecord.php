@@ -176,7 +176,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 								{
 									if(is_array($defaultable) && in_array($variable_name, $defaultable))
 									{
-										// Set to default value
+										$value = new $class_name(0);
 									}
 									else
 									{
