@@ -40,7 +40,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		$this->ConstructDataset($this->sId);
 	}
 	
-	public function ConstructDataset($uDataSource, $defaultable)
+	public function ConstructDataset($uDataSource, $defaultable = null)
 	{
 		$bind_datasets = true;
 		
