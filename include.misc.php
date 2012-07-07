@@ -222,3 +222,8 @@ function parse_rss($url)
 	
 	return $items;
 }
+
+function fix_utf8($input)
+{
+	return utf8_encode(utf8_decode($input));
+}
