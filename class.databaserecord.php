@@ -126,6 +126,11 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		{
 			foreach($dataset as $variable_name => $column_name) 
 			{
+				if(!isset($this->uData[$column_name]))
+				{
+					throw new Exception("The column name {$column_name} was not found in the resultset - ensure the prototype corresponds to the table schema.");
+				}
+				
 				$original_value = $this->uData[$column_name];
 				
 				switch($type)
@@ -383,7 +388,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				$sQueryKeysValues = implode(", ", $sKeyValueList);
 				$query = "UPDATE {$this->table_name} SET {$sQueryKeysValues} WHERE `{$this->id_field}` = '{$this->sId}'";
 			}
-			
+			pretty_dump($query);
 			if($result = mysql_query($query))
 			{
 				if($insert_mode == CPHP_INSERTMODE_INSERT)
