@@ -198,9 +198,9 @@ function time_ago($timestamp, $locale)
 			
 			$interval = $date1->diff($date2);
 			$years = (int)$interval->y;
-			$months = (int)$interval->m; 
-			$weeks = (int)$interval->format("%U"); 
-			$days = (int)$interval->d; 
+			$months = (int)$interval->m;
+			$weeks = (int)$interval->format("%U");
+			$days = (int)$interval->d;
 			$hours = (int)$interval->h;
 			$minutes = (int)$interval->i;
 			$seconds = (int)$interval->s;
