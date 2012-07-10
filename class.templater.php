@@ -680,6 +680,10 @@ class TemplateIfElement extends TemplateSyntaxElement
 			{
 				$b = false;
 			}
+			elseif($b == "null")
+			{
+				$b = null;
+			}
 			
 			switch($this->operator)
 			{
