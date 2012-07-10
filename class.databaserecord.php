@@ -419,8 +419,11 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				}
 				else
 				{
-					$classname = get_class($this);
-					throw new Exception("Database insertion failed: prototype property {$value['key']} not found in object of type {$classname}.");
+					if($this->autoloading === false)
+					{
+						$classname = get_class($this);
+						throw new Exception("Database insertion failed: prototype property {$value['key']} not found in object of type {$classname}.");
+					}
 				}
 			}
 			
