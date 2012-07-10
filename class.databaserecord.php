@@ -229,6 +229,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				case "simplehtml":
 				case "html":
 				case "nl2br":
+				case "none":
 					$safe_default_value = "";
 					$unsafe_default_value = "";
 					break;
