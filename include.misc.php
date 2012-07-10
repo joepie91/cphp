@@ -227,3 +227,105 @@ function fix_utf8($input)
 {
 	return utf8_encode(utf8_decode($input));
 }
+
+function generate_pagination($min, $max, $current, $around, $start, $end)
+{
+	/* Generates an array with pages that should be shown in a pagination bar.
+	 * $min		The first page number (this will usually be 1).
+	 * $max		The last page number (this is usually the total amount of pages).
+	 * $current	The page the user is currently on.
+	 * $around	The amount of pages that should at least be shown around the current page.
+	 * $start	The amount of pages that should at least be shown at the start.
+	 * $end		The amount of pages that should at least be shown at the end.
+	 * 
+	 * Returns:
+	 * Array, containing integers (for the pages) and null objects (for the boundaries). */
+	
+	if($max < ($start + $end + ($around * 2) + 1))
+	{
+		/* There are less pages than there would be elements. */
+		$return_all = true;
+	}
+	else
+	{
+		$return_all = false;
+	}
+	
+	if($return_all === true)
+	{
+		$return_array = array();
+		
+		for($i = 1; $i <= $max; $i++)
+		{
+			$return_array[] = $i;
+		}
+		
+		return $return_array;
+	}
+	else
+	{
+		/* Calculation time... */
+		if($start + $around >= $current - 1)
+		{
+			$need_left = false;
+		}
+		else
+		{
+			$need_left = true;
+		}
+		
+		if($max - ($end + $around) <= $current + 1)
+		{
+			$need_right = false;
+		}
+		else
+		{
+			$need_right = true;
+		}
+		
+		$return_array = array();
+		
+		for($i = 1; $i <= $start; $i++)
+		{
+			$return_array[] = $i;
+		}
+		
+		if($need_left)
+		{
+			$return_array[] = null;
+			$left_start = $current - $around;
+		}
+		else
+		{
+			$left_start = $i;
+		}
+		
+		for($i = $left_start; $i <= $current + $around; $i++)
+		{
+			if($i >= $max)
+			{
+				break;
+			}
+			
+			$return_array[] = $i;
+		}
+		
+		if($need_right)
+		{
+			$return_array[] = null;
+			$right_start = $max - $end;
+		}
+		else
+		{
+			$right_start = $i;
+		}
+		
+		for($i = $right_start; $i <= $max; $i++)
+		{
+			$return_array[] = $i;
+		}
+		
+		return $return_array;
+	}
+}
+
