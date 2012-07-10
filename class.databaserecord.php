@@ -20,6 +20,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	public $table_name = "";
 	public $query_cache = 60;
 	public $id_field = "Id";
+	public $autoloading = true;
 	
 	public $prototype = array();
 	public $prototype_render = array();	
@@ -32,6 +33,36 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	{
 		$this->ConstructDataset($uDataSource, $defaultable);
 		$this->EventConstructed();
+	}
+	
+	public function __get($name)
+	{
+		if($name[0] == "s" || $name[0] == "u")
+		{
+			$actual_name = substr($name, 1);
+			
+			$found = false;
+			
+			foreach($this->prototype as $type => $dataset)
+			{
+				if(isset($dataset[$actual_name]))
+				{
+					$found = true;
+					$found_type = $type;
+					$found_field = $dataset[$actual_name];
+				}
+			}
+			
+			if($found === false)
+			{
+				$classname = get_class($this);
+				throw new PrototypeException("The {$actual_name} variable was not found in the prototype of the {$classname} class.");
+			}
+			
+			$this->SetField($found_type, $actual_name, $found_field);
+			
+			return $this->$name;
+		}
 	}
 	
 	public function RefreshData()
@@ -105,9 +136,12 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			
 			$this->uData = $uDataSource;
 			
-			foreach($this->prototype as $type => $dataset)
+			if($this->autoloading === false)
 			{
-				$this->BindDataset($type, $dataset, $defaultable);
+				foreach($this->prototype as $type => $dataset)
+				{
+					$this->BindDataset($type, $dataset, $defaultable);
+				}
 			}
 			
 			$this->sFound = true;
@@ -126,90 +160,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		{
 			foreach($dataset as $variable_name => $column_name) 
 			{
-				if(!isset($this->uData[$column_name]))
-				{
-					throw new Exception("The column name {$column_name} was not found in the resultset - ensure the prototype corresponds to the table schema.");
-				}
-				
-				$original_value = $this->uData[$column_name];
-				
-				switch($type)
-				{
-					case "string":
-						$value = htmlspecialchars(stripslashes($original_value));
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
-					case "html":
-						$value = filter_html(stripslashes($original_value));
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
-					case "simplehtml":
-						$value = filter_html_strict(stripslashes($original_value));
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
-					case "nl2br":
-						$value = nl2br(htmlspecialchars(stripslashes($original_value)), false);
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
-					case "numeric":
-						$value = (is_numeric($original_value)) ? $original_value : 0;
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
-					case "timestamp":
-						$value = unix_from_mysql($original_value);
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
-					case "boolean":
-						$value = (empty($original_value)) ? false : true;
-						$variable_type = CPHP_VARIABLE_SAFE;
-						break;
-					case "none":
-						$value = $original_value;
-						$variable_type = CPHP_VARIABLE_UNSAFE;
-						break;
-					default:
-						$found = false;
-						foreach($cphp_class_map as $class_type => $class_name)
-						{
-							if($type == $class_type)
-							{
-								try
-								{
-									$value = new $class_name($original_value);
-								}
-								catch (NotFoundException $e)
-								{
-									if(is_array($defaultable) && in_array($variable_name, $defaultable))
-									{
-										$value = new $class_name(0);
-									}
-									else
-									{
-										$e->field = $variable_name;
-										throw $e;
-									}
-								}
-								$variable_type = CPHP_VARIABLE_SAFE;
-								$found = true;
-							}
-						}
-						
-						if($found == false)
-						{
-							$classname = get_class($this);
-							throw new Exception("Cannot determine type of dataset ({$type}) passed on to {$classname}.BindDataset."); 
-							break;
-						}
-				}
-				
-				if($variable_type == CPHP_VARIABLE_SAFE)
-				{
-					$variable_name_safe = "s" . $variable_name;
-					$this->$variable_name_safe = $value;
-				}
-				
-				$variable_name_unsafe = "u" . $variable_name;
-				$this->$variable_name_unsafe = $original_value;
+				$this->SetField($type, $variable_name, $column_name);
 			}
 		}
 		else
@@ -217,6 +168,89 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			$classname = get_class($this);
 			throw new Exception("Invalid dataset passed on to {$classname}.BindDataset."); 
 		}
+	}
+	
+	public function SetField($type, $variable_name, $column_name)
+	{
+		global $cphp_class_map;
+		
+		if(!isset($this->uData[$column_name]))
+		{
+			throw new Exception("The column name {$column_name} was not found in the resultset - ensure the prototype corresponds to the table schema.");
+		}
+		
+		$original_value = $this->uData[$column_name];
+		
+		switch($type)
+		{
+			case "string":
+				$value = htmlspecialchars(stripslashes($original_value));
+				$variable_type = CPHP_VARIABLE_SAFE;
+				break;
+			case "html":
+				$value = filter_html(stripslashes($original_value));
+				$variable_type = CPHP_VARIABLE_SAFE;
+				break;
+			case "simplehtml":
+				$value = filter_html_strict(stripslashes($original_value));
+				$variable_type = CPHP_VARIABLE_SAFE;
+				break;
+			case "nl2br":
+				$value = nl2br(htmlspecialchars(stripslashes($original_value)), false);
+				$variable_type = CPHP_VARIABLE_SAFE;
+				break;
+			case "numeric":
+				$value = (is_numeric($original_value)) ? $original_value : 0;
+				$variable_type = CPHP_VARIABLE_SAFE;
+				break;
+			case "timestamp":
+				$value = unix_from_mysql($original_value);
+				$variable_type = CPHP_VARIABLE_SAFE;
+				break;
+			case "boolean":
+				$value = (empty($original_value)) ? false : true;
+				$variable_type = CPHP_VARIABLE_SAFE;
+				break;
+			case "none":
+				$value = $original_value;
+				$variable_type = CPHP_VARIABLE_UNSAFE;
+				break;
+			default:
+				$found = false;
+				foreach($cphp_class_map as $class_type => $class_name)
+				{
+					if($type == $class_type)
+					{
+						try
+						{
+							$value = new $class_name($original_value);
+						}
+						catch (NotFoundException $e)
+						{
+							$e->field = $variable_name;
+							throw $e;
+						}
+						$variable_type = CPHP_VARIABLE_SAFE;
+						$found = true;
+					}
+				}
+				
+				if($found == false)
+				{
+					$classname = get_class($this);
+					throw new Exception("Cannot determine type of dataset ({$type}) passed on to {$classname}.BindDataset."); 
+					break;
+				}
+		}
+		
+		if($variable_type == CPHP_VARIABLE_SAFE)
+		{
+			$variable_name_safe = "s" . $variable_name;
+			$this->$variable_name_safe = $value;
+		}
+		
+		$variable_name_unsafe = "u" . $variable_name;
+		$this->$variable_name_unsafe = $original_value;
 	}
 	
 	public function FillDefaults()
