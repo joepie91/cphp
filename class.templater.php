@@ -530,7 +530,22 @@ class Templater
 		if($identifier == "if")
 		{
 			$statement_parts = explode(" ", $statement, 3);
-			$element->left = $statement_parts[0];
+			
+			$variable = $statement_parts[0];
+			
+			if(strpos($variable, "|") !== false)
+			{
+				$variable_parts = explode("|", $variable, 2);
+				
+				$element->operation = $variable_parts[0];
+				$element->left = $variable_parts[1];
+			}
+			else
+			{
+				$element->left = $variable;
+			}
+			
+			
 			$element->operator = $statement_parts[1];
 			$element->right = $statement_parts[2];
 		}
@@ -648,49 +663,84 @@ class TemplateIfElement extends TemplateSyntaxElement
 	public $left = "";
 	public $right = "";
 	public $operator = "";
+	public $operation = "";
 	
 	public function Evaluate($data)
 	{
-		$a = $this->FetchVariable($this->left, $data);
-		$b = $this->right;
-		
-		if($b == "true")
+		if(empty($this->operation))
 		{
-			$b = true;
+			$a = $this->FetchVariable($this->left, $data);
+			$b = $this->right;
+			
+			if($b == "true")
+			{
+				$b = true;
+			}
+			elseif($b == "false")
+			{
+				$b = false;
+			}
+			
+			switch($this->operator)
+			{
+				case "=":
+				case "==":
+					$result = ($a == $b);
+					break;
+				case ">":
+					$result = ($a > $b);
+					break;
+				case "<":
+					$result = ($a < $b);
+					break;
+				case ">=":
+					$result = ($a >= $b);
+					break;
+				case "<=":
+					$result = ($a <= $b);
+					break;
+				case "!=":
+					$result = ($a != $b);
+					break;
+				default:
+					$result = false;
+			}
+			
+			if($result == true)
+			{
+				return parent::Evaluate($data);
+			}
 		}
-		elseif($b == "false")
+		elseif($this->operation == "isset")
 		{
-			$b = false;
-		}
-		
-		switch($this->operator)
-		{
-			case "=":
-			case "==":
-				$result = ($a == $b);
-				break;
-			case ">":
-				$result = ($a > $b);
-				break;
-			case "<":
-				$result = ($a < $b);
-				break;
-			case ">=":
-				$result = ($a >= $b);
-				break;
-			case "<=":
-				$result = ($a <= $b);
-				break;
-			case "!=":
-				$result = ($a != $b);
-				break;
-			default:
-				$result = false;
-		}
-		
-		if($result == true)
-		{
-			return parent::Evaluate($data);
+			try
+			{
+				$this->FetchVariable($this->left, $data);
+				
+				$found = true;
+			}
+			catch (TemplateEvaluationException $e)
+			{
+				$found = false;
+			}
+			
+			if($this->right == "false")
+			{
+				$desired = false;
+			}
+			else
+			{
+				$desired = true;
+			}
+			
+			if($found === $desired)
+			{
+				return parent::Evaluate($data);
+			}
+			else
+			{
+				return "";
+			}
 		}
 	}
 }
