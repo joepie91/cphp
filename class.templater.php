@@ -742,6 +742,30 @@ class TemplateIfElement extends TemplateSyntaxElement
 				return "";
 			}
 		}
+		elseif($this->operation == "isempty")
+		{
+			$a = $this->FetchVariable($this->left, $data);
+			
+			$empty = empty($a);
+			
+			if($this->right == "false")
+			{
+				$desired = false;
+			}
+			else
+			{
+				$desired = true;
+			}
+			
+			if($empty == $desired)
+			{
+				return parent::Evaluate($data);
+			}
+			else
+			{
+				return "";
+			}
+		}
 	}
 }
 
