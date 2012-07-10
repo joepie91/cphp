@@ -244,15 +244,6 @@ function generate_pagination($min, $max, $current, $around, $start, $end)
 	if($max < ($start + $end + ($around * 2) + 1))
 	{
 		/* There are less pages than there would be elements. */
-		$return_all = true;
-	}
-	else
-	{
-		$return_all = false;
-	}
-	
-	if($return_all === true)
-	{
 		$return_array = array();
 		
 		for($i = 1; $i <= $max; $i++)
@@ -265,39 +256,23 @@ function generate_pagination($min, $max, $current, $around, $start, $end)
 	else
 	{
 		/* Calculation time... */
-		if($start + $around >= $current - 1)
-		{
-			$need_left = false;
-		}
-		else
-		{
-			$need_left = true;
-		}
-		
-		if($max - ($end + $around) <= $current + 1)
-		{
-			$need_right = false;
-		}
-		else
-		{
-			$need_right = true;
-		}
-		
 		$return_array = array();
 		
+		/* Start with the left segment. */
 		for($i = 1; $i <= $start; $i++)
 		{
 			$return_array[] = $i;
 		}
 		
-		if($need_left)
+		/* Now the middle segment. */
+		if($start + $around >= $current - 1)
 		{
-			$return_array[] = null;
-			$left_start = $current - $around;
+			$left_start = $i;
 		}
 		else
 		{
-			$left_start = $i;
+			$return_array[] = null;
+			$left_start = $current - $around;
 		}
 		
 		for($i = $left_start; $i <= $current + $around; $i++)
@@ -310,14 +285,15 @@ function generate_pagination($min, $max, $current, $around, $start, $end)
 			$return_array[] = $i;
 		}
 		
-		if($need_right)
+		/* And finally the right segment. */
+		if($max - ($end + $around) <= $current + 1)
 		{
-			$return_array[] = null;
-			$right_start = $max - $end;
+			$right_start = $i;
 		}
 		else
 		{
-			$right_start = $i;
+			$return_array[] = null;
+			$right_start = $max - $end;
 		}
 		
 		for($i = $right_start; $i <= $max; $i++)
@@ -325,6 +301,7 @@ function generate_pagination($min, $max, $current, $around, $start, $end)
 			$return_array[] = $i;
 		}
 		
+		/* All done! */
 		return $return_array;
 	}
 }
