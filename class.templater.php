@@ -575,7 +575,14 @@ class TemplateSyntaxElement
 	{
 		if(strpos($name, "[") === false)
 		{
-			return $data[$name];
+			if(isset($data[$name]))
+			{
+				return $data[$name];
+			}
+			else
+			{
+				throw new TemplateEvaluationException("Could not find the variable {$name} in the dataset.");
+			}
 		}
 		else
 		{
@@ -602,11 +609,13 @@ class TemplateSyntaxElement
 						}
 						else
 						{
-							return false;
+							throw new TemplateEvaluationException("Error while fetching {$name}; the {$item} variable does not exist in the specified object.");
 						}
 					}
 				}
 			}
+			
+			throw new TemplateEvaluationException("Could not find the variable {$name} anywhere in the tree.");
 		}
 	}
 }

@@ -50,3 +50,4 @@ class NotFoundException extends Exception
 
 class TemplateSyntaxException extends TemplateException {}
 class TemplateParsingException extends TemplateException {}
+class TemplateEvaluationException extends Exception {}
