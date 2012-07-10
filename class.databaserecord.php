@@ -69,6 +69,25 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	{
 		$this->PurgeCache();
 		$this->ConstructDataset($this->sId);
+		
+		if($this->autoloading === true)
+		{
+			$this->PurgeVariables();
+		}
+	}
+	
+	public function PurgeVariables()
+	{
+		foreach($this->prototype as $type => $dataset)
+		{
+			foreach($dataset as $field)
+			{
+				$variable_name_safe = "s" . $field;
+				$variable_name_unsafe = "u" . $field;
+				unset($this->$variable_name_safe);
+				unset($this->$variable_name_unsafe);
+			}
+		}
 	}
 	
 	public function ConstructDataset($uDataSource, $defaultable = null)
