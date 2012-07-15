@@ -126,7 +126,7 @@ function mysql_query_cached($query, $expiry = 60, $key = "")
 		}
 		else
 		{
-			return false;
+			return null;
 		}
 	}
 }
