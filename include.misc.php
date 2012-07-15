@@ -306,3 +306,8 @@ function generate_pagination($min, $max, $current, $around, $start, $end)
 	}
 }
 
+function ends_with($haystack, $needle)
+{
+	return (substr($haystack, -strlen($needle)) == $needle);
+}
+
