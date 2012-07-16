@@ -23,6 +23,7 @@ require("include.misc.php");
 require("include.memcache.php");
 require("include.mysql.php");
 require("include.session.php");
+require("include.csrf.php");
 
 require("class.templater.php");
 require("class.localizer.php");

@@ -310,7 +310,10 @@ class Templater
 		$template->templatename = $template->basedir . $templatename . $template->extension;;
 		$template->Load($templatename);
 		$template->Localize($localize);
-		return $template->Parse($compile);
+		$result = $template->Parse($compile);
+		$result = CSRF::InsertTokens($result);
+		
+		return $result;
 	}
 	
 	public function Parse($data)
