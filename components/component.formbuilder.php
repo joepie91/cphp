@@ -316,4 +316,3 @@ class CPHPFormSelect extends CPHPFormInputElement
 {
 	public $options = array();
 }
-?>

@@ -69,4 +69,3 @@ class CPHPErrorHandler
 		return $template['error']->Render();
 	}
 }
-?>
