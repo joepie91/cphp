@@ -28,6 +28,8 @@ require("include.csrf.php");
 require("class.templater.php");
 require("class.localizer.php");
 
+require("include.locale.php");
+
 if(empty($not_html))
 {
 	header("Content-Type:text/html; charset=UTF-8");
