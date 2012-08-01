@@ -33,8 +33,14 @@ class Localizer
 	
 	public function LoadInternal($locale)
 	{
-		global $cphp_locale_path, $cphp_locale_ext;
-		$lng_contents = file_get_contents("{$cphp_locale_path}/{$locale}.{$cphp_locale_ext}");
+		global $cphp_config;
+		
+		if(!isset($cphp_config->locale->path) || !isset($cphp_config->locale->extension))
+		{
+			throw new Exception("The locale path settings are not specified correctly. Refer to the CPHP manual for instructions.");
+		}
+		
+		$lng_contents = file_get_contents("{$cphp_config->locale->path}/{$locale}.{$cphp_config->locale->extension}");
 		if($lng_contents !== false)
 		{
 			$lines = explode("\n", $lng_contents);
