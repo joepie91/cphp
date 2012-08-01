@@ -13,10 +13,10 @@
 
 if($_CPHP !== true) { die(); }
 
-if($cphp_memcache_enabled)
+if(!empty($cphp_config->memcache->enabled))
 {
 	$cphp_memcache = new Memcache;
-	$cphp_memcache_established = $cphp_memcache->connect($cphp_memcache_server, $cphp_memcache_port);
+	$cphp_memcache_established = $cphp_memcache->connect($cphp_config->memcache->hostname, $cphp_config->memcache->port);
 
 	if($cphp_memcache_established !== false)
 	{
@@ -30,9 +30,9 @@ if($cphp_memcache_enabled)
 
 function mc_get($key)
 {
-	global $cphp_memcache_enabled, $cphp_memcache_connected, $cphp_memcache;
+	global $cphp_config, $cphp_memcache_connected, $cphp_memcache;
 	
-	if($cphp_memcache_enabled === false || $cphp_memcache_connected === false)
+	if(empty($cphp_config->memcache->enabled) || $cphp_memcache_connected === false)
 	{
 		return false;
 	}
@@ -52,15 +52,15 @@ function mc_get($key)
 
 function mc_set($key, $value, $expiry)
 {
-	global $cphp_memcache_enabled, $cphp_memcache_connected, $cphp_memcache_compressed, $cphp_memcache;
+	global $cphp_config, $cphp_memcache_connected, $cphp_memcache;
 	
-	if($cphp_memcache_enabled === false || $cphp_memcache_connected === false)
+	if(empty($cphp_config->memcache->enabled) || $cphp_memcache_connected === false)
 	{
 		return false;
 	}
 	else
 	{
-		if($cphp_memcache_compressed === true)
+		if(!empty($cphp_config->memcache->compressed) === true)
 		{
 			$flag = MEMCACHE_COMPRESSED;
 		}
@@ -76,9 +76,9 @@ function mc_set($key, $value, $expiry)
 
 function mc_delete($key)
 {
-	global $cphp_memcache_enabled, $cphp_memcache_connected, $cphp_memcache;
+	global $cphp_config, $cphp_memcache_connected, $cphp_memcache;
 	
-	if($cphp_memcache_enabled === false || $cphp_memcache_connected === false)
+	if(empty($cphp_config->memcache->enabled) || $cphp_memcache_connected === false)
 	{
 		return false;
 	}

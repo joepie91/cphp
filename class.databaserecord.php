@@ -31,6 +31,11 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function __construct($uDataSource, $defaultable = null)
 	{
+		if(!isset($cphp_config->class_map))
+		{
+			die("No class map was specified. Refer to the CPHP manual for instructions.");
+		}
+		
 		$this->ConstructDataset($uDataSource, $defaultable);
 		$this->EventConstructed();
 	}
@@ -173,7 +178,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function BindDataset($type, $dataset, $defaultable)
 	{
-		global $cphp_class_map;
+		global $cphp_config;
 		
 		if(is_array($dataset))
 		{
@@ -191,7 +196,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function SetField($type, $variable_name, $column_name)
 	{
-		global $cphp_class_map;
+		global $cphp_config;
 		
 		if(!isset($this->uData[$column_name]))
 		{
@@ -236,7 +241,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				break;
 			default:
 				$found = false;
-				foreach($cphp_class_map as $class_type => $class_name)
+				foreach(get_object_vars($cphp_config->class_map) as $class_type => $class_name)
 				{
 					if($type == $class_type)
 					{
@@ -477,13 +482,13 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	{
 		// Not done yet!
 		
-		if(!isset($cphp_class_map[$type]))
+		if(!isset($cphp_config->class_map->$type))
 		{
 			$classname = get_class($this);
 			throw new NotFoundException("Non-existent 'type' argument passed on to {$classname}.RetrieveChildren function.");
 		}
 		
-		$parent_type = get_parent_class($cphp_class_map[$type]);
+		$parent_type = get_parent_class($cphp_config->class_map->$type);
 		if($parent_type !== "CPHPDatabaseRecordClass")
 		{
 			$parent_type = ($parent_type === false) ? "NONE" : $parent_type;

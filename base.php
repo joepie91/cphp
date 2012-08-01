@@ -13,7 +13,7 @@
 
 require("include.constants.php");
 
-require("cphp/config.php");
+require("include.config.php");
 
 require("include.dependencies.php");
 require("include.exceptions.php");
@@ -28,11 +28,6 @@ require("include.csrf.php");
 require("class.templater.php");
 require("class.localizer.php");
 
-$locale = new Localizer();
-$locale->Load($cphp_locale_name);
-
-setlocale(LC_ALL, $locale->locale);
-
 if(empty($not_html))
 {
 	header("Content-Type:text/html; charset=UTF-8");
@@ -41,7 +36,7 @@ if(empty($not_html))
 require("class.base.php");
 require("class.databaserecord.php");
 
-foreach($cphp_components as $component)
+foreach($cphp_config->components as $component)
 {
 	require("components/component.{$component}.php");
 }

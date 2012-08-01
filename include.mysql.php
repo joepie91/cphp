@@ -15,13 +15,26 @@ if($_CPHP !== true) { die(); }
 
 $cphp_mysql_connected = false;
 
-if($cphp_mysql_enabled === true)
+if(!empty($cphp_config->database->driver))
 {
-	if(mysql_connect($cphp_mysql_host, $cphp_mysql_user, $cphp_mysql_pass))
+	if(empty($cphp_config->database->database))
 	{
-		if(mysql_select_db($cphp_mysql_db))
+		die("No database was configured. Refer to the CPHP manual for instructions.");
+	}
+	
+	if(mysql_connect($cphp_config->database->hostname, $cphp_config->database->username, $cphp_config->database->password))
+	{
+		if(mysql_select_db($cphp_config->database->database))
 		{
 			$cphp_mysql_connected = true;
 		}
+		else
+		{
+			die("Could not connect to the specified database. Refer to the CPHP manual for instructions.");
+		}
+	}
+	else
+	{
+		die("Could not connect to the specified database server. Refer to the CPHP manual for instructions.");
 	}
 }

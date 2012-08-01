@@ -13,6 +13,15 @@
 
 if($_CPHP !== true) { die(); }
 
+if(!empty($cphp_config->locale->default_timezone))
+{
+	$user_preferences[CPHP_SETTING_TIMEZONE] = $cphp_config->locale->default_timezone;
+}
+else
+{
+	die("No default timezone was specified. Refer to the CPHP manual for instructions.");
+}
+
 $timezones = array(
 	'Pacific/Kwajalein' => 				'(GMT-12:00) International Date Line West',
 	'Pacific/Midway' => 				'(GMT-11:00) Midway Island',
