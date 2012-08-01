@@ -77,10 +77,17 @@ class Templater
 	{
 		if(!is_null($this->tpl))
 		{
-			foreach($strings as $key => $str)
+			if(is_array($strings))
 			{
-				$this->tpl_rendered = str_replace("<%!{$key}>", $str, $this->tpl_rendered);
-				$this->tpl_rendered = str_replace("{%!{$key}}", $str, $this->tpl_rendered);
+				foreach($strings as $key => $str)
+				{
+					$this->tpl_rendered = str_replace("<%!{$key}>", $str, $this->tpl_rendered);
+					$this->tpl_rendered = str_replace("{%!{$key}}", $str, $this->tpl_rendered);
+				}
+			}
+			else
+			{
+				Throw new Exception("No valid array of localized strings specified.");
 			}
 		}
 		else
