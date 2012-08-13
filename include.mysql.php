@@ -75,7 +75,7 @@ class CachedPDO extends PDO
 			}
 			
 			$statement->execute();
-			$result = $statement->fetchAll();
+			$result = $statement->fetchAll(PDO::FETCH_ASSOC);
 			
 			mc_set($cache_hash, $result, $expiry);
 			
