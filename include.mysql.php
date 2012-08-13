@@ -38,3 +38,71 @@ if(!empty($cphp_config->database->driver))
 		die("Could not connect to the specified database server. Refer to the CPHP manual for instructions.");
 	}
 }
+
+class CachedPDO extends PDO
+{
+	public function CachedQuery($query, $parameters, $expiry = 60)
+	{
+		$query_hash = md5($query);
+		$parameter_hash = md5(serialize($parameters));
+		$cache_hash = $query_hash . $parameter_hash;
+		
+		if($result = mc_get($cache_hash))
+		{
+			$return_object->source = "memcache";
+			$return_object->data = $result;
+		}
+		else
+		{
+			$statement = $this->prepare($query);
+			
+			if(count($parameters) > 0)
+			{
+				foreach($parameters as $key => $value)
+				{
+					$type = $this->GuessType($value);
+					
+					if(is_numeric($value) && $type == PDO::PARAM_STR)
+					{
+						/* PDO library apparently thinks it's part of a strongly typed language and doesn't do any typecasting.
+						 * We'll do it ourselves then. */
+						 $value = (int) $value;
+						 $type = PDO::PARAM_INT;
+					}
+					
+					$statement->bindValue($key, $value, $type);
+				}
+			}
+			
+			$statement->execute();
+			$result = $statement->fetchAll();
+			
+			mc_set($cache_hash, $result, $expiry);
+			
+			$return_object->source = "database";
+			$return_object->data = $result;
+		}
+			
+		return $return_object;
+	}
+	
+	public function GuessType($value)
+	{
+		if(is_int($value))
+		{
+			return PDO::PARAM_INT;
+		}
+		elseif(is_bool($value))
+		{
+			return PDO::PARAM_BOOL;
+		}
+		elseif(is_null($value))
+		{
+			return PDO::PARAM_NULL;
+		}
+		else
+		{
+			return PDO::PARAM_STR;
+		}
+	}
+}
