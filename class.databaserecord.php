@@ -31,6 +31,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function __construct($uDataSource, $defaultable = null)
 	{
+		global $cphp_config;
+		
 		if(!isset($cphp_config->class_map))
 		{
 			die("No class map was specified. Refer to the CPHP manual for instructions.");
