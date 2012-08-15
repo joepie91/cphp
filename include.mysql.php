@@ -90,12 +90,24 @@ class CachedPDO extends PDO
 			}
 			
 			$statement->execute();
-			$result = $statement->fetchAll(PDO::FETCH_ASSOC);
-			
-			mc_set($cache_hash, $result, $expiry);
-			
-			$return_object->source = "database";
-			$return_object->data = $result;
+			if($result = $statement->fetchAll(PDO::FETCH_ASSOC))
+			{
+				if(count($result) > 0)
+				{
+					mc_set($cache_hash, $result, $expiry);
+					
+					$return_object->source = "database";
+					$return_object->data = $result;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return null;
+			}
 		}
 			
 		return $return_object;
