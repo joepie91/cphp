@@ -22,26 +22,41 @@ if(!empty($cphp_config->database->driver))
 		die("No database was configured. Refer to the CPHP manual for instructions.");
 	}
 	
-	if(mysql_connect($cphp_config->database->hostname, $cphp_config->database->username, $cphp_config->database->password))
+	if(empty($cphp_config->database->pdo))
 	{
-		if(mysql_select_db($cphp_config->database->database))
+		if(mysql_connect($cphp_config->database->hostname, $cphp_config->database->username, $cphp_config->database->password))
 		{
-			$cphp_mysql_connected = true;
+			if(mysql_select_db($cphp_config->database->database))
+			{
+				$cphp_mysql_connected = true;
+			}
+			else
+			{
+				die("Could not connect to the specified database. Refer to the CPHP manual for instructions.");
+			}
 		}
 		else
 		{
-			die("Could not connect to the specified database. Refer to the CPHP manual for instructions.");
+			die("Could not connect to the specified database server. Refer to the CPHP manual for instructions.");
 		}
 	}
 	else
 	{
-		die("Could not connect to the specified database server. Refer to the CPHP manual for instructions.");
+		try
+		{
+			$database = new CachedPDO("mysql:host={$cphp_config->database->hostname};dbname={$cphp_config->database->database}", $cphp_config->database->username, $cphp_config->database->password);
+			$cphp_mysql_connected = true;
+		}
+		catch (Exception $e)
+		{
+			die("Could not connect to the specified database. Refer to the CPHP manual for instructions.");
+		}
 	}
 }
 
 class CachedPDO extends PDO
 {
-	public function CachedQuery($query, $parameters, $expiry = 60)
+	public function CachedQuery($query, $parameters = array(), $expiry = 60)
 	{
 		$query_hash = md5($query);
 		$parameter_hash = md5(serialize($parameters));
