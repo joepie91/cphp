@@ -99,6 +99,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function ConstructDataset($uDataSource, $defaultable = null)
 	{
+		global $database;
+		
 		$bind_datasets = true;
 		
 		if(is_numeric($uDataSource))
@@ -109,15 +111,32 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				{
 					$this->sId = (is_numeric($uDataSource)) ? $uDataSource : 0;
 					
-					$query = sprintf($this->fill_query, $uDataSource);
-					if($result = mysql_query_cached($query, $this->query_cache))
+					if(strpos($this->fill_query, " :") === false)
 					{
-						$uDataSource = $result->data[0];
+						/* Use mysql_* to fetch the object from the database. */
+						$query = sprintf($this->fill_query, $uDataSource);
+						if($result = mysql_query_cached($query, $this->query_cache))
+						{
+							$uDataSource = $result->data[0];
+						}
+						else
+						{
+							$classname = get_class($this);
+							throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.", 0, null, "");
+						}
 					}
 					else
 					{
-						$classname = get_class($this);
-						throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.", 0, null, "");
+						/* Use PDO to fetch the object from the database. */
+						if($result = $database->CachedQuery($this->fill_query, array(":Id" => $this->sId), $this->query_cache))
+						{
+							$uDataSource = $result->data[0];
+						}
+						else
+						{
+							$classname = get_class($this);
+							throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.", 0, null, "");
+						}
 					}
 				}
 				else
