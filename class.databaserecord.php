@@ -371,11 +371,11 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				/* Temporary implementation to make old style queries play nice with PDO code. */
 				if(strpos($this->verify_query, ":Id") !== false)
 				{
-					$this->verify_query = str_replace(":Id", "%d", $this->verify_query);
+					$this->verify_query = str_replace(":Id", "'%d'", $this->verify_query);
 				}
 				
 				$query = sprintf($this->verify_query, $this->sId);
-				if($result = mysql_query_cached($query))
+				if($result = mysql_query_cached($query, 0))
 				{
 					$insert_mode = CPHP_INSERTMODE_UPDATE;
 				}
@@ -542,9 +542,24 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function PurgeCache()
 	{
-		$query = sprintf($this->fill_query, $this->sId);
+		if(strpos($this->fill_query, ":Id") !== false)
+		{
+			$fill_query = str_replace(":Id", "'%d'", $this->fill_query);
+		}
+		else
+		{
+			$fill_query = $this->fill_query;
+		}
+		
+		$query = sprintf($fill_query, $this->sId);
 		$key = md5($query) . md5($query . "x");
+		
+		$query_hash = md5($this->fill_query);
+		$parameter_hash = md5(serialize(array(':Id' => (int) $this->sId)));
+		$pdo_key = $query_hash . $parameter_hash;
+		
 		mc_delete($key);
+		mc_delete($pdo_key);
 	}
 	
 	public function RenderTemplate($template = "")

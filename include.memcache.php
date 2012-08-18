@@ -39,6 +39,7 @@ function mc_get($key)
 	else
 	{
 		$get_result = $cphp_memcache->get($key);
+		
 		if($get_result !== false)
 		{
 			return $get_result;
@@ -84,7 +85,8 @@ function mc_delete($key)
 	}
 	else
 	{
-		return $cphp_memcache->delete($key);
+		$delete_result = $cphp_memcache->delete($key);
+		return $delete_result;
 	}
 }
 
@@ -142,7 +144,10 @@ function mysql_query_cached($query, $expiry = 60, $key = "")
 				{
 					if(count($data) > 0)
 					{
-						mc_set($key, $result, $expiry);
+						if($expiry != 0)
+						{
+							mc_set($key, $result, $expiry);
+						}
 					
 						$return_object->source = "database";
 						$return_object->data = $result;

@@ -61,7 +61,7 @@ class CachedPDO extends PDO
 		$query_hash = md5($query);
 		$parameter_hash = md5(serialize($parameters));
 		$cache_hash = $query_hash . $parameter_hash;
-		
+			
 		$return_object = new stdClass;
 		
 		if($result = mc_get($cache_hash))
@@ -96,7 +96,10 @@ class CachedPDO extends PDO
 			{
 				if(count($result) > 0)
 				{
-					mc_set($cache_hash, $result, $expiry);
+					if($expiry != 0)
+					{
+						mc_set($cache_hash, $result, $expiry);
+					}
 					
 					$return_object->source = "database";
 					$return_object->data = $result;
