@@ -368,6 +368,12 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			}
 			else
 			{
+				/* Temporary implementation to make old style queries play nice with PDO code. */
+				if(strpos($this->verify_query, ":Id") !== false)
+				{
+					$this->verify_query = str_replace(":Id", "%d", $this->verify_query);
+				}
+				
 				$query = sprintf($this->verify_query, $this->sId);
 				if($result = mysql_query_cached($query))
 				{
@@ -427,7 +433,21 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 							$sFinalValue = ($bool) ? "1" : "0";
 							break;
 						case "timestamp":
-							$sFinalValue = (isset($this->$variable_name_safe)) ? mysql_from_unix($this->$variable_name_safe) : mysql_from_unix(unix_from_local($this->$variable_name_unsafe));
+							if(is_numeric($this->$variable_name_unsafe))
+							{
+								$sFinalValue = mysql_from_unix($this->$variable_name_unsafe);
+							}
+							else
+							{
+								if(isset($this->$variable_name_safe))
+								{
+									$sFinalValue = mysql_from_unix($this->$variable_name_safe);
+								}
+								else
+								{
+									$sFinalValue = mysql_from_unix(unix_from_local($this->$variable_name_unsafe));
+								}
+							}
 							break;
 						case "string":
 							$sFinalValue = (isset($this->$variable_name_unsafe)) ? mysql_real_escape_string($this->$variable_name_unsafe) : mysql_real_escape_string($this->$variable_name_safe);

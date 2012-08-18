@@ -90,6 +90,8 @@ function mc_delete($key)
 
 function mysql_query_cached($query, $expiry = 60, $key = "")
 {
+	global $database;
+	
 	if($key == "")
 	{
 		$key = md5($query) . md5($query . "x");
@@ -103,30 +105,62 @@ function mysql_query_cached($query, $expiry = 60, $key = "")
 	}
 	else
 	{
-		if($res = mysql_query($query))
+		if(empty($cphp_config->database->pdo))
 		{
-			$found = false;
-			
-			while($row = mysql_fetch_assoc($res))
+			if($res = mysql_query($query))
 			{
-				$return_object->data[] = $row;
-				$found = true;
-			}
-			
-			if($found === true)
-			{
-				$return_object->source = "database";
-				mc_set($key, $return_object->data, $expiry);
-				return $return_object;
+				$found = false;
+				
+				while($row = mysql_fetch_assoc($res))
+				{
+					$return_object->data[] = $row;
+					$found = true;
+				}
+				
+				if($found === true)
+				{
+					$return_object->source = "database";
+					mc_set($key, $return_object->data, $expiry);
+					return $return_object;
+				}
+				else
+				{
+					return false;
+				}
 			}
 			else
 			{
-				return false;
+				return null;
 			}
 		}
 		else
 		{
-			return null;
+			/* Transparently use PDO to run the query. */
+			if($res = $database->Query($query))
+			{
+				if($data = $statement->fetchAll(PDO::FETCH_ASSOC))
+				{
+					if(count($data) > 0)
+					{
+						mc_set($key, $result, $expiry);
+					
+						$return_object->source = "database";
+						$return_object->data = $result;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else
+				{
+					return null;
+				}
+			}
+			else
+			{
+				return null;
+			}
 		}
 	}
 }
