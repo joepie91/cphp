@@ -92,7 +92,7 @@ function mc_delete($key)
 
 function mysql_query_cached($query, $expiry = 60, $key = "")
 {
-	global $database;
+	global $cphp_config, $database;
 	
 	if($key == "")
 	{
