@@ -495,7 +495,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				$query = "UPDATE {$this->table_name} SET {$sQueryKeysValues} WHERE `{$this->id_field}` = '{$this->sId}'";
 			}
 			
-			if($result = mysql_query_cached($query, 0))
+			if($result = mysql_query_cached($query, 0, "", true))
 			{
 				if($insert_mode == CPHP_INSERTMODE_INSERT)
 				{

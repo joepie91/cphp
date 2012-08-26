@@ -90,7 +90,7 @@ function mc_delete($key)
 	}
 }
 
-function mysql_query_cached($query, $expiry = 60, $key = "")
+function mysql_query_cached($query, $expiry = 60, $key = "", $exec = false)
 {
 	global $cphp_config, $database;
 	
@@ -138,7 +138,7 @@ function mysql_query_cached($query, $expiry = 60, $key = "")
 		else
 		{
 			/* Transparently use PDO to run the query. */
-			if($statement = $database->Query($query))
+			if($exec === false && $statement = $database->query($query))
 			{
 				if($data = $statement->fetchAll(PDO::FETCH_ASSOC))
 				{
@@ -151,6 +151,8 @@ function mysql_query_cached($query, $expiry = 60, $key = "")
 					
 						$return_object->source = "database";
 						$return_object->data = $result;
+						
+						return $return_object;
 					}
 					else
 					{
@@ -160,6 +162,25 @@ function mysql_query_cached($query, $expiry = 60, $key = "")
 				else
 				{
 					return null;
+				}
+			}
+			elseif($exec === true)
+			{
+				$statement = $database->exec($query);
+				
+				if(is_null($statement))
+				{
+					return null;
+				}
+				elseif($statement == 0)
+				{
+					return false;
+				}
+				else
+				{
+					$return_object->source = "database";
+					$return_object->data = $result;
+					return $return_object;
 				}
 			}
 			else
