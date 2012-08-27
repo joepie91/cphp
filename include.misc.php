@@ -311,3 +311,15 @@ function ends_with($haystack, $needle)
 	return (substr($haystack, -strlen($needle)) == $needle);
 }
 
+function redirect($target)
+{
+	header("Location: {$target}");
+	die();
+}
+
+function ceil_precision($value, $precision = 0)
+{
+	$multiplier = pow(10, $precision);
+	
+	return ceil($value * $multiplier) / $multiplier;
+}
