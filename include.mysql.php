@@ -45,6 +45,7 @@ if(!empty($cphp_config->database->driver))
 		try
 		{
 			$database = new CachedPDO("mysql:host={$cphp_config->database->hostname};dbname={$cphp_config->database->database}", $cphp_config->database->username, $cphp_config->database->password);
+			$database->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_TO_STRING);
 			$cphp_mysql_connected = true;
 		}
 		catch (Exception $e)
