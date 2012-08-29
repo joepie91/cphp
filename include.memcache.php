@@ -178,8 +178,9 @@ function mysql_query_cached($query, $expiry = 60, $key = "", $exec = false)
 				}
 				else
 				{
+					$return_object = new stdClass();
 					$return_object->source = "database";
-					$return_object->data = $result;
+					$return_object->data = $statement;
 					return $return_object;
 				}
 			}
