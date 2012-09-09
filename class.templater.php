@@ -385,7 +385,7 @@ class Templater
 				// Not a templater tag, abort.
 				$switch = CPHP_TEMPLATER_SWITCH_NONE;
 				$type = CPHP_TEMPLATER_TYPE_TAG_NONE;
-				$text_block .= "{";
+				$text_block .= "{" . $char;
 			}
 			elseif($switch == CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER && $type == CPHP_TEMPLATER_TYPE_TAG_NONE)
 			{
