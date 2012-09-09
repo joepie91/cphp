@@ -360,6 +360,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function InsertIntoDatabase()
 	{
+		global $cphp_config, $database;
+		
 		if(!empty($this->verify_query))
 		{
 			if($this->sId == 0)
@@ -499,7 +501,15 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			{
 				if($insert_mode == CPHP_INSERTMODE_INSERT)
 				{
-					$this->sId = mysql_insert_id();
+					/* Temporary PDO implementation. */
+					if(!empty($cphp_config->database->pdo))
+					{
+						$this->sId = $database->lastInsertId();
+					}
+					else
+					{
+						$this->sId = mysql_insert_id();
+					}
 				}
 				
 				$this->RefreshData();
@@ -509,6 +519,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			else
 			{
 				$classname = get_class($this);
+				var_dump($database->errorInfo());
 				throw new DatabaseException("Database insertion query failed in object of type {$classname}. Error message: " . mysql_error());
 			}
 		}

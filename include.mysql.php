@@ -112,6 +112,7 @@ class CachedPDO extends PDO
 			}
 			else
 			{
+				/* This will fire when there are zero results AND on syntax errors. */
 				return null;
 			}
 		}

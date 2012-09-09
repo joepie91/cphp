@@ -148,9 +148,10 @@ function mysql_query_cached($query, $expiry = 60, $key = "", $exec = false)
 						{
 							mc_set($key, $result, $expiry);
 						}
-					
+						
+						$return_object = new stdClass;
 						$return_object->source = "database";
-						$return_object->data = $result;
+						$return_object->data = $data;
 						
 						return $return_object;
 					}
@@ -172,10 +173,10 @@ function mysql_query_cached($query, $expiry = 60, $key = "", $exec = false)
 				{
 					return null;
 				}
-				elseif($statement == 0)
+				/*elseif($statement == 0)
 				{
 					return false;
-				}
+				}*/
 				else
 				{
 					$return_object = new stdClass();
