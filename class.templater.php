@@ -312,7 +312,11 @@ class Templater
 	/* New parser code */
 	
 	public static function AdvancedParse($templatename, $localize = array(), $compile = array())
-	{		
+	{
+		global $template_global_vars;
+		
+		$compile = array_merge($compile, $template_global_vars);
+			
 		$template = new Templater();
 		$template->templatename = $template->basedir . $templatename . $template->extension;;
 		$template->Load($templatename);
