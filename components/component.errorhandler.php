@@ -42,30 +42,27 @@ class CPHPErrorHandler
 	{
 		global $locale;
 		
-		$template['error'] = new Templater();
-		
 		switch($this->sErrorType)
 		{
 			case CPHP_ERRORHANDLER_TYPE_ERROR:
-				$template['error']->Load("errorhandler.error");
+				$template = "errorhandler.error";
 				break;
 			case CPHP_ERRORHANDLER_TYPE_INFO:
-				$template['error']->Load("errorhandler.info");
+				$template = "errorhandler.info";
 				break;
 			case CPHP_ERRORHANDLER_TYPE_WARNING:
-				$template['error']->Load("errorhandler.warning");
+				$template = "errorhandler.warning";
 				break;
 			case CPHP_ERRORHANDLER_TYPE_SUCCESS:
-				$template['error']->Load("errorhandler.success");
+				$template = "errorhandler.success";
 				break;
+			default:
+				return false;
 		}
 		
-		$template['error']->Localize($locale->strings);
-		$template['error']->Compile(array(
+		return Templater::AdvancedParse($template, $locale->strings, array(
 			'title'		=> $this->sTitle,
 			'message'	=> $this->sMessage
 		));
-		
-		return $template['error']->Render();
 	}
 }
