@@ -120,10 +120,12 @@ class CPHPRouter extends CPHPBaseClass
 							if($authenticated === true)
 							{
 								$destination = $route_destination['target'];
+								$this->sAuthenticated = true;
 							}
 							else
 							{
 								$destination = $sRouterErrorDestination;
+								$this->sAuthenticated = false;
 							}
 						}
 						else
