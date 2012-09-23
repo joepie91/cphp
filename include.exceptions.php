@@ -29,7 +29,7 @@ class TemplateException extends Exception
 	public $endpos = 0;
 	public $code = 0;
 	
-	public function __construct($message, $file, $startpos, $endpos, $code)
+	public function __construct($message, $file, $startpos, $endpos, $code = "")
 	{
 		$this->message = $message;
 		$this->file = $file;
