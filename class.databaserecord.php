@@ -585,7 +585,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function Export()
 	{
-		// Exports the object as a nested array. Observes the export prototype.
+		/* This function is DEPRECATED and should not be used. Please manually build your arrays instead. */
 		$export_array = array();
 		
 		foreach($this->prototype_export as $field)
