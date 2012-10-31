@@ -934,7 +934,7 @@ class TemplateInput extends TemplateStandaloneElement
 		
 		$additional = implode(" ", $final_list);
 		
-		return "<input type=\"{$type}\" id=\"form_{$group}_{$name}\" {$additional}>";
+		return "<input type=\"{$type}\" id=\"form_{$group}_{$name}\" name=\"{$name}\" {$additional}>";
 	}
 }
 
