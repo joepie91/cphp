@@ -438,10 +438,22 @@ class TemplateElement
 		else
 		{
 			/* Stand-alone variable. */
+			$target = $this->parent;
 			
 			if(isset($data[$variable_name]))
 			{
-				return $data[$variable_name];
+				if(is_null($operation))
+				{
+					return $data[$variable_name];
+				}
+				elseif($operation == "isset")
+				{
+					return true;
+				}
+				elseif($operation == "isempty")
+				{
+					return empty($data[$variable_name]);
+				}
 			}
 			else
 			{
@@ -905,6 +917,9 @@ class TemplateInput extends TemplateStandaloneElement
 					case "type":
 						$type = $argument[2];
 						break;
+					case "value":
+						$value = $argument[2];
+						break;
 					default:
 						$additional_list[$argument[1]] = $argument[2];
 				}
@@ -916,6 +931,11 @@ class TemplateInput extends TemplateStandaloneElement
 			throw new TemplateEvaluationException("No name was specified for an input element.");
 		}
 		
+		if(isset($_POST[$name]))
+		{
+			$value = str_replace('"', '\"', htmlspecialchars($_POST[$name]));
+		}
+				
 		$final_list = array();
 		
 		foreach($additional_list as $key => $value)
@@ -925,7 +945,7 @@ class TemplateInput extends TemplateStandaloneElement
 		
 		$additional = implode(" ", $final_list);
 		
-		return "<input type=\"{$type}\" id=\"form_{$group}_{$name}\" name=\"{$name}\" {$additional}>";
+		return "<input type=\"{$type}\" id=\"form_{$group}_{$name}\" name=\"{$name}\" value=\"{$value}\" {$additional}>";
 	}
 }
 
