@@ -884,7 +884,7 @@ class TemplateInput extends TemplateStandaloneElement
 		
 		$argument_list = implode(" ", $this->tokens);
 		
-		if(preg_match_all('/([a-z]+)="([^"]+)"/', $argument_list, $matches, PREG_SET_ORDER))
+		if(preg_match_all('/([a-zA-Z0-9-]+)="([^"]+)"/', $argument_list, $matches, PREG_SET_ORDER))
 		{
 			foreach($matches as $argument)
 			{
@@ -901,6 +901,9 @@ class TemplateInput extends TemplateStandaloneElement
 						break;
 					case "name":
 						$name = $argument[2];
+						break;
+					case "type":
+						$type = $argument[2];
 						break;
 					default:
 						$additional_list[$argument[1]] = $argument[2];
