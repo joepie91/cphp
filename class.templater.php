@@ -945,25 +945,6 @@ class TemplateRoot extends TemplateBlockElement
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Templater
 {
 	public static function AdvancedParse($templatename, $localize = array(), $compile = array())
