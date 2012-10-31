@@ -16,16 +16,6 @@ if($_CPHP !== true) { die(); }
 $template_cache = array();
 $template_global_vars = array();
 
-define("CPHP_TEMPLATER_SWITCH_NONE",		1);
-define("CPHP_TEMPLATER_SWITCH_TAG_OPEN",	2);
-define("CPHP_TEMPLATER_SWITCH_TAG_SYNTAX",	3);
-define("CPHP_TEMPLATER_SWITCH_TAG_IDENTIFIER",	4);
-define("CPHP_TEMPLATER_SWITCH_TAG_STATEMENT",	5);
-define("CPHP_TEMPLATER_SWITCH_TAG_VARNAME",	6);
-define("CPHP_TEMPLATER_TYPE_TAG_NONE",		10);
-define("CPHP_TEMPLATER_TYPE_TAG_OPEN",		11);
-define("CPHP_TEMPLATER_TYPE_TAG_CLOSE",		12);
-
 define("MODE_NONE", 0);
 define("MODE_TAG", 1);
 
@@ -58,8 +48,6 @@ class NewTemplater
 	{
 		global $template_global_vars;
 		$data = array_merge($data, $template_global_vars);
-		
-		//pretty_dump($data);
 		
 		$templater = new NewTemplater();
 		$templater->Load($template_name);
