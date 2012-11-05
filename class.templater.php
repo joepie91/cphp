@@ -71,7 +71,7 @@ class NewTemplater
 		else
 		{
 			$this->template = file_get_contents("templates/{$template_name}.tpl");
-			$template_cache[$template_name] = $template;
+			$template_cache[$template_name] = $this->template;
 		}
 		
 		if($template === false)
