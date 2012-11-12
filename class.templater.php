@@ -27,7 +27,8 @@ class NewTemplater
 		'standalone' => array(
 			'?'		=> "TemplateVariable",
 			'!'		=> "TemplateLocaleString",
-			'input'		=> "TemplateInput"
+			'input'		=> "TemplateInput",
+			'option'	=> "TemplateOption"
 		),
 		'block' => array(
 			'foreach'	=> array(
@@ -40,6 +41,10 @@ class NewTemplater
 					"else"		=> "TemplateElse",
 					"elseif"	=> "TemplateElseIf"
 				)
+			),
+			'select'	=> array(
+				'processor'	=> "TemplateSelect",
+				'subconstructs'	=> array()
 			)
 		)
 	);
@@ -503,6 +508,32 @@ class TemplateElement
 			}
 		}
 	}
+	
+	public function ReplaceInlineVariables($original, $data)
+	{
+		$self = $this; /* Workaround because using $this in the callback is not supported. */
+		
+		return preg_replace_callback('/\(\?([a-zA-Z0-9_.\[\]-]+)\)/', function ($match) use ($data, $self) {
+			return $self->FetchVariable($match[1], $data);
+		}, $original);
+	}
+	
+	public function TraverseUntil($selector)
+	{
+		$current = $this;
+		
+		while($current->type != $selector)
+		{
+			if(empty($current->parent))
+			{
+				throw new TemplateEvaluationException("Reached top of parsing tree without finding the specified element.");
+			}
+			
+			$current = $current->parent;
+		}
+		
+		return $current;
+	}
 }
 
 class TemplateDataElement extends TemplateElement
@@ -895,6 +926,7 @@ class TemplateInput extends TemplateStandaloneElement
 		$additional_list = array();
 		
 		$argument_list = implode(" ", $this->tokens);
+		$argument_list = $this->ReplaceInlineVariables($argument_list, $data);
 		
 		if(preg_match_all('/([a-zA-Z0-9-]+)="([^"]+)"/', $argument_list, $matches, PREG_SET_ORDER))
 		{
@@ -965,6 +997,128 @@ class TemplateRoot extends TemplateBlockElement
 		}
 		
 		return $return_data;
+	}
+}
+
+class TemplateSelect extends TemplateBlockElement
+{
+	public $type = "select";
+	public $name = "";
+	
+	public function Evaluate($parent, $localized_strings, $data)
+	{
+		$this->parent = $parent;
+		
+		$argument_list = implode(" ", $this->tokens);
+		$argument_list = $this->ReplaceInlineVariables($argument_list, $data);
+		
+		$additional_list = array();
+		$group = "general";
+		$name = "";
+		
+		if(preg_match_all('/([a-zA-Z0-9-]+)="([^"]+)"/', $argument_list, $matches, PREG_SET_ORDER))
+		{
+			foreach($matches as $argument)
+			{
+				switch($argument[1])
+				{
+					case "group":
+						$group = $argument[2];
+						break;
+					case "name":
+						$name = $argument[2];
+						break;
+					default:
+						$additional_list[$argument[1]] = $argument[2];
+				}
+			}
+		}
+		
+		if(empty($name))
+		{
+			throw new TemplateEvaluationException("No name was specified for a select element.");
+		}
+		
+		$this->name = $name;
+		
+		$final_list = array(
+			"name=\"{$name}\"",
+			"id=\"form_{$group}_{$name}\""
+		);
+		
+		foreach($additional_list as $key => $value)
+		{
+			$final_list[] = "{$key}=\"{$value}\"";
+		}
+		
+		$attributes = implode(" ", $final_list);
+		
+		$items = array();
+		
+		foreach($this->elements as $element)
+		{
+			$items[] = $element->Evaluate($this, $localized_strings, $data);
+		}
+		
+		$options = implode(" ", $items);
+		
+		return "<select {$attributes}>{$options}</select>";
+	}
+}
+
+class TemplateOption extends TemplateStandaloneElement
+{
+	public $type = "option";
+	
+	public function Evaluate($parent, $localized_strings, $data)
+	{
+		$this->parent = $parent;
+		$element = $this;
+		
+		$argument_list = implode(" ", $element->tokens);
+		$argument_list = $this->ReplaceInlineVariables($argument_list, $data);
+				
+		$additional_list = array();
+		$text = "";
+		$value = "";
+		
+		if(preg_match_all('/([a-zA-Z0-9-]+)="([^"]+)"/', $argument_list, $matches, PREG_SET_ORDER))
+		{
+			foreach($matches as $argument)
+			{
+				switch($argument[1])
+				{
+					case "text":
+						$text = $argument[2];
+						break;
+					case "value":
+						$value = $argument[2];
+						break;
+					default:
+						$additional_list[$argument[1]] = $argument[2];
+				}
+			}
+		}
+		
+		$final_list = array(
+			"value=\"{$value}\""
+		);
+		
+		foreach($additional_list as $key => $value)
+		{
+			$final_list[] = "{$key}=\"{$value}\"";
+		}
+		
+		$select_element = $this->TraverseUntil("select");
+		
+		if(!empty($_POST[$select_element->name]) && $_POST[$select_element->name] == $value)
+		{
+			$final_list[] = "selected=\"selected\"";
+		}
+		
+		$attributes_child = implode(" ", $final_list);
+		
+		return "<option {$attributes_child}>{$text}</option>";
 	}
 }
 
