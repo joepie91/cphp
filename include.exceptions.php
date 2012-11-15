@@ -13,13 +13,23 @@
 
 if($_CPHP !== true) { die(); }
 
-class OwnershipException extends Exception {}
-class UserAccessException extends Exception {}
-class PrototypeException extends Exception {}
-class ConstructorException extends Exception {}
-class MissingDataException extends Exception {}
-class DatabaseException extends Exception {}
-class TypeException extends Exception {}
+class BaseException extends Exception
+{
+	public function __construct($message, $code = 0, $previous = null, $data = array())
+	{
+		$this->data = $data;
+		
+		parent::__construct($message, $code, $previous);
+	}
+}
+
+class OwnershipException extends BaseException {}
+class UserAccessException extends BaseException {}
+class PrototypeException extends BaseException {}
+class ConstructorException extends BaseException {}
+class MissingDataException extends BaseException {}
+class DatabaseException extends BaseException {}
+class TypeException extends BaseException {}
 
 class TemplateException extends Exception
 {
@@ -38,16 +48,16 @@ class TemplateException extends Exception
 	}
 }
 
-class NotFoundException extends Exception 
+class NotFoundException extends BaseException 
 {
-	public function __construct($message, $code = 0, $previous = null, $field =  "")
+	public function __construct($message, $code = 0, $previous = null, $field =  "", $data = array())
 	{
 		$this->field = $field;
 		
-		parent::__construct($message, $code, $previous);
+		parent::__construct($message, $code, $previous, $data);
 	}
 }
 
 class TemplateSyntaxException extends TemplateException {}
 class TemplateParsingException extends TemplateException {}
-class TemplateEvaluationException extends Exception {}
+class TemplateEvaluationException extends BaseException {}

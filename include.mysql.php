@@ -92,28 +92,36 @@ class CachedPDO extends PDO
 				}
 			}
 			
-			$statement->execute();
-			if($result = $statement->fetchAll(PDO::FETCH_ASSOC))
+			if($statement->execute() === true)
 			{
-				if(count($result) > 0)
+				if($result = $statement->fetchAll(PDO::FETCH_ASSOC))
 				{
-					if($expiry != 0)
+					if(count($result) > 0)
 					{
-						mc_set($cache_hash, $result, $expiry);
+						if($expiry != 0)
+						{
+							mc_set($cache_hash, $result, $expiry);
+						}
+						
+						$return_object->source = "database";
+						$return_object->data = $result;
 					}
-					
-					$return_object->source = "database";
-					$return_object->data = $result;
+					else
+					{
+						return false;
+					}
 				}
 				else
 				{
-					return false;
+					/* There were zero results. Return null instead of an object without results, to allow for statements
+					 * of the form if($result = $database->CachedQuery()) . */
+					return null;
 				}
 			}
 			else
 			{
-				/* This will fire when there are zero results AND on syntax errors. */
-				return null;
+				/* The query failed. */
+				throw new DatabaseException("The query failed.", 0, null, array('query' => $query, 'parameters' => $parameters));
 			}
 		}
 			
