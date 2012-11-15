@@ -148,7 +148,7 @@ class NewTemplater
 								foreach($subconstructs[$current_level + 1] as $subconstruct)
 								{
 									/* For each subconstruct, create the appropriate element and throw it on the stack. */
-									if($subconstruct['name'] == $construct_name)
+									if($subconstruct['name'] == $construct_name || $subconstruct['name'] == null)
 									{
 										/* This is the first subconstruct - basically the one that relates to the original block
 										 * construct. We will create a special type of subconstruct - a ParentSubconstruct - to
