@@ -51,13 +51,18 @@ class NewTemplater
 	
 	public static function Render($template_name, $localized_strings, $data)
 	{
-		global $template_global_vars;
+		global $template_global_vars, $cphp_debug_enabled;
 		$data = array_merge($data, $template_global_vars);
 		
 		$templater = new NewTemplater();
 		$templater->Load($template_name);
 		$templater->Localize($localized_strings);
 		$templater->Parse();
+		
+		if($cphp_debug_enabled === true)
+		{
+			echo($templater->root->PrintDebug(0, true));
+		}
 		
 		$result = $templater->Evaluate($localized_strings, $data);
 		$result = CSRF::InsertTokens($result);
@@ -93,6 +98,7 @@ class NewTemplater
 		$subconstructs = array();
 		$blocks = array();
 		$block_tokens = array();
+		$subconstruct_tokens = array();
 		$mode = MODE_NONE;
 		$buffer = '';
 		
@@ -139,26 +145,81 @@ class NewTemplater
 								
 								$subconstructs[$current_level + 1][] = array(
 									'name'		=> $last_subconstruct[$current_level + 1],
-									'tokens'	=> $block_tokens[$current_level + 1],
+									'tokens'	=> $subconstruct_tokens[$current_level],
 									'elements'	=> $elements[$current_level + 1]
 								);
+								
+								cphp_debug_snapshot(array(
+									'position'		=> $pos,
+									'current_level'		=> $current_level,
+									'message'		=> "Stored final subconstruct",
+									'type'			=> $last_subconstruct[$current_level + 1],
+									'target_level'		=> $current_level + 1,
+									'current_tokens'	=> $block_tokens[$current_level + 1],
+									'relevant_tokens'	=> $relevant_tokens,
+									'block_tokens'		=> $block_tokens,
+									'last_subconstruct'	=> $last_subconstruct,
+									'target_sub'		=> $last_subconstruct[$current_level + 1],
+									'subconstructs'		=> $subconstructs,
+									'subconstruct_tokens'	=> $subconstruct_tokens
+									
+								));
 								
 								$sub_elements = array();
 								
 								foreach($subconstructs[$current_level + 1] as $subconstruct)
 								{
+									cphp_debug_snapshot(array(
+										'position'		=> $pos,
+										'current_level'		=> $current_level,
+										'message'		=> "Processing construct...",
+										'type'			=> $subconstruct['name'],
+										'current_tokens'	=> $tokens,
+										'relevant_tokens'	=> $relevant_tokens,
+										'block_tokens'		=> $block_tokens,
+										'last_subconstruct'	=> $last_subconstruct,
+										'subconstructs'		=> $subconstructs,
+										'subconstruct_tokens'	=> $subconstruct_tokens
+									));
+									
 									/* For each subconstruct, create the appropriate element and throw it on the stack. */
 									if($subconstruct['name'] == $construct_name || $subconstruct['name'] == null)
 									{
 										/* This is the first subconstruct - basically the one that relates to the original block
 										 * construct. We will create a special type of subconstruct - a ParentSubconstruct - to
 										 * accomodate this. */
+										cphp_debug_snapshot(array(
+											'message'		=> "Processing first subconstruct, adding ParentSubConstruct to stack.",
+											'position'		=> $pos,
+											'current_level'		=> $current_level,
+											'relevant_tokens'	=> $relevant_tokens,
+											'block_tokens'		=> $block_tokens,
+											'last_subconstruct'	=> $last_subconstruct,
+											'subconstructs'		=> $subconstructs,
+											'current_subconstruct'	=> $subconstruct,
+											'subconstruct_tokens'	=> $subconstruct_tokens
+										));
+										
 										$sub_elements[] = new TemplateParentSubconstruct(array(), $subconstruct['elements']);
 									}
 									else
 									{
 										/* This is an actual subconstruct. We will create the appropriate element. */
 										$sub_processor = $this->constructs['block'][$construct_name]['subconstructs'][$subconstruct['name']];
+										
+										cphp_debug_snapshot(array(
+											'message'		=> "Processing *real* subconstruct, adding applicable object to stack.",
+											'position'		=> $pos,
+											'current_level'		=> $current_level,
+											'relevant_tokens'	=> $relevant_tokens,
+											'block_tokens'		=> $block_tokens,
+											'last_subconstruct'	=> $last_subconstruct,
+											'subconstructs'		=> $subconstructs,
+											'current_subconstruct'	=> $subconstruct,
+											'class'			=> $sub_processor,
+											'subconstruct_tokens'	=> $subconstruct_tokens
+										));
+										
 										$sub_elements[] = new $sub_processor($subconstruct['tokens'], $subconstruct['elements']);
 									}
 								}
@@ -177,7 +238,7 @@ class NewTemplater
 							$elements[$current_level + 1] = array();
 							$blocks[$current_level] = null;
 							$subconstructs[$current_level + 1] = array();
-							$last_subconstruct[$current_level] = null;
+							$last_subconstruct[$current_level + 1] = null;
 						}
 					}
 					else
@@ -232,6 +293,19 @@ class NewTemplater
 									$last_subconstruct[$current_level + 1] = $construct;
 									$block_tokens[$current_level] = $tokens;
 									
+									cphp_debug_snapshot(array(
+										'position'		=> $pos,
+										'current_level'		=> $current_level,
+										'message'		=> "Found construct",
+										'type'			=> $construct_name,
+										'current_tokens'	=> $tokens,
+										'relevant_tokens'	=> $relevant_tokens,
+										'block_tokens'		=> $block_tokens,
+										'last_subconstruct'	=> $last_subconstruct,
+										'subconstructs'		=> $subconstructs,
+										'subconstruct_tokens'	=> $subconstruct_tokens
+									));
+									
 									$current_level += 1;
 									
 									$found = true;
@@ -252,10 +326,36 @@ class NewTemplater
 									if(empty($subconstructs[$current_level]))
 									{
 										$relevant_tokens = array();
+										$offset = -1;
+										
+										cphp_debug_snapshot(array(
+											'position'		=> $pos,
+											'current_level'		=> $current_level,
+											'message'		=> "First subconstruct found",
+											'relevant_tokens'	=> $relevant_tokens,
+											'block_tokens'		=> $block_tokens,
+											'last_subconstruct'	=> $last_subconstruct,
+											'subconstructs'		=> $subconstructs,
+											'subconstruct_tokens'	=> $subconstruct_tokens,
+											'tok'			=> $tokens
+										));
 									}
 									else
 									{
-										$relevant_tokens = $block_tokens[$current_level];
+										$relevant_tokens = $subconstruct_tokens[$current_level - 1];
+										$offset = -1;
+										
+										cphp_debug_snapshot(array(
+											'position'		=> $pos,
+											'current_level'		=> $current_level,
+											'message'		=> "Following subconstruct found",
+											'relevant_tokens'	=> $relevant_tokens,
+											'block_tokens'		=> $block_tokens,
+											'last_subconstruct'	=> $last_subconstruct,
+											'subconstructs'		=> $subconstructs,
+											'subconstruct_tokens'	=> $subconstruct_tokens,
+											'tok'			=> $tokens
+										));
 									}
 									
 									$subconstructs[$current_level][] = array(
@@ -266,7 +366,22 @@ class NewTemplater
 									
 									$elements[$current_level] = array();
 									$last_subconstruct[$current_level] = $construct;
-									$block_tokens[$current_level] = $tokens;
+									$subconstruct_tokens[$current_level + $offset] = $tokens;
+									
+									cphp_debug_snapshot(array(
+										'position'		=> $pos,
+										'current_level'		=> $current_level,
+										'message'		=> "Stored subconstruct",
+										'current_tokens'	=> $relevant_tokens,
+										'relevant_tokens'	=> $relevant_tokens,
+										'block_tokens'		=> $block_tokens,
+										'last_subconstruct'	=> $last_subconstruct,
+										'subconstructs'		=> $subconstructs,
+										'subconstruct_tokens'	=> $subconstruct_tokens,
+										'tok'			=> $tokens,
+										'offset'		=> $offset
+										
+									));
 									
 									$found = true;
 									break;
