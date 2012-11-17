@@ -14,6 +14,7 @@
 require("include.constants.php");
 
 require("include.config.php");
+require("include.debug.php");
 
 require("include.dependencies.php");
 require("include.exceptions.php");
