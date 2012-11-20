@@ -15,6 +15,7 @@ if($_CPHP !== true) { die(); }
 
 $template_cache = array();
 $template_global_vars = array();
+$template_variable_hooks = array();
 
 define("MODE_NONE", 0);
 define("MODE_TAG", 1);
@@ -444,6 +445,14 @@ class NewTemplater
 	{
 		return $this->root->Evaluate($localized_strings, $data);
 	}
+	
+	public static function RegisterVariableHook($name, $function)
+	{
+		global $template_variable_hooks;
+		$template_variable_hooks[$name] = $function;
+		
+		return true;
+	}
 }
 
 class TemplateElement
@@ -491,6 +500,8 @@ class TemplateElement
 	
 	public function FetchVariable($variable_name, $data)
 	{
+		global $template_variable_hooks;
+		
 		$operation = null;
 		
 		if(strpos($variable_name, "|") !== false)
@@ -511,46 +522,67 @@ class TemplateElement
 			
 			$target = $this->parent;
 			
-			/* Traverse up the tree to find the provider of this particular collection */
-			while(true)
+			if(isset($template_variable_hooks[$collection_name]))
 			{
-				if($target->context == $collection_name)
-				{
-					if(is_array($target->context_item))
-					{
-						if(is_null($operation))
-						{
-							return $target->context_item[$key_name];
-						}
-						elseif($operation == "isset")
-						{
-							return true;
-						}
-						elseif($operation == "isempty")
-						{
-							return empty($target->context_item[$key_name]);
-						}
-					}
-					else
-					{
-						throw new TemplateEvaluationException("The specified collection '{$collection_name}' is not an array.");
-					}
-				}
+				$function = $template_variable_hooks[$collection_name];
 				
-				if(!empty($target->parent))
+				if(is_null($operation))
 				{
-					$target = $target->parent;
+					return $function(true, $key_name);
 				}
-				else
+				elseif($operation == "isset")
 				{
-					/* Reached the top of the tree. */
-					if($operation == "isset")
+					return true;
+				}
+				elseif($operation == "isempty")
+				{
+					$result = $function(false, $key_name);
+					return empty($result);
+				}
+			}
+			else
+			{
+				/* Traverse up the tree to find the provider of this particular collection */
+				while(true)
+				{
+					if($target->context == $collection_name)
 					{
-						return false;
+						if(is_array($target->context_item))
+						{
+							if(is_null($operation))
+							{
+								return $target->context_item[$key_name];
+							}
+							elseif($operation == "isset")
+							{
+								return true;
+							}
+							elseif($operation == "isempty")
+							{
+								return empty($target->context_item[$key_name]);
+							}
+						}
+						else
+						{
+							throw new TemplateEvaluationException("The specified collection '{$collection_name}' is not an array.");
+						}
+					}
+					
+					if(!empty($target->parent))
+					{
+						$target = $target->parent;
 					}
 					else
 					{
-						throw new TemplateEvaluationException("Could not find the referenced collection '{$collection_name}'.");
+						/* Reached the top of the tree. */
+						if($operation == "isset")
+						{
+							return false;
+						}
+						else
+						{
+							throw new TemplateEvaluationException("Could not find the referenced collection '{$collection_name}'.");
+						}
 					}
 				}
 			}
@@ -560,7 +592,25 @@ class TemplateElement
 			/* Stand-alone variable. */
 			$target = $this->parent;
 			
-			if(isset($data[$variable_name]))
+			if(isset($template_variable_hooks[$variable_name]))
+			{
+				$function = $template_variable_hooks[$variable_name];
+				
+				if(is_null($operation))
+				{
+					return $function(true);
+				}
+				elseif($operation == "isset")
+				{
+					return true;
+				}
+				elseif($operation == "isempty")
+				{
+					$result = $function(false);
+					return empty($result);
+				}
+			}
+			elseif(isset($data[$variable_name]))
 			{
 				if(is_null($operation))
 				{
