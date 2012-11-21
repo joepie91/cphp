@@ -43,3 +43,12 @@ foreach($cphp_config->components as $component)
 {
 	require("components/component.{$component}.php");
 }
+
+if(get_magic_quotes_gpc())
+{
+	/* By default, get rid of all quoted variables. Magic quotes are evil. */
+	foreach($_POST as &$var)
+	{
+		$var = stripslashes($var);
+	}
+}
