@@ -62,10 +62,10 @@ class CachedPDO extends PDO
 		$query_hash = md5($query);
 		$parameter_hash = md5(serialize($parameters));
 		$cache_hash = $query_hash . $parameter_hash;
-			
+		
 		$return_object = new stdClass;
 		
-		if($result = mc_get($cache_hash))
+		if($expiry != 0 && $result = mc_get($cache_hash))
 		{
 			$return_object->source = "memcache";
 			$return_object->data = $result;
