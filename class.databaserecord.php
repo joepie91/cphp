@@ -611,6 +611,22 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		return $export_array;
 	}
 	
+	public static function CreateFromQuery($query, $parameters = array(), $expiry = 0)
+	{
+		global $database;
+		
+		$result = $database->CachedQuery($query, $parameters, $expiry);
+		
+		if($result)
+		{
+			return new self($result);
+		}
+		else
+		{
+			throw new NotFoundException("No results for specified query.");
+		}
+	}
+	
 	// Define events
 	
 	protected function EventConstructed() { }
