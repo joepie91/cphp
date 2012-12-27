@@ -50,6 +50,13 @@ class NewTemplater
 		)
 	);
 	
+	public static function SetGlobalVariable($key, $value)
+	{
+		global $template_global_vars;
+		
+		$template_global_vars[$key] = $value;
+	}
+	
 	public static function Render($template_name, $localized_strings, $data)
 	{
 		global $template_global_vars, $cphp_debug_enabled;
