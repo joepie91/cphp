@@ -619,7 +619,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		
 		if($result)
 		{
-			return new self($result);
+			return new static($result);
 		}
 		else
 		{
