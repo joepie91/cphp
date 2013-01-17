@@ -611,7 +611,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		return $export_array;
 	}
 	
-	public static function CreateFromQuery($query, $parameters = array(), $expiry = 0)
+	public static function CreateFromQuery($query, $parameters = array(), $expiry = 0, $first_only = false)
 	{
 		global $database;
 		
@@ -619,7 +619,21 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		
 		if($result)
 		{
-			return new static($result);
+			if(count($result->data) == 1 || $first_only === true)
+			{
+				return new static($result);
+			}
+			else
+			{
+				$result_array = array();
+				
+				foreach($result->data as $row)
+				{
+					$result_array[] = new static($row);
+				}
+				
+				return $result_array;
+			}
 		}
 		else
 		{
