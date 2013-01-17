@@ -619,9 +619,13 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		
 		if($result)
 		{
-			if(count($result->data) == 1 || $first_only === true)
+			if($first_only === true)
 			{
 				return new static($result);
+			}
+			elseif(count($result->data) == 1)
+			{
+				return array(new static($result));
 			}
 			else
 			{
