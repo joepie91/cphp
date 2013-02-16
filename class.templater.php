@@ -1193,6 +1193,7 @@ class TemplateSelect extends TemplateBlockElement
 		$additional_list = array();
 		$group = "general";
 		$name = "";
+		$id = "";
 		
 		if(preg_match_all('/([a-zA-Z0-9-]+)="([^"]+)"/', $argument_list, $matches, PREG_SET_ORDER))
 		{
@@ -1206,6 +1207,9 @@ class TemplateSelect extends TemplateBlockElement
 					case "name":
 						$name = $argument[2];
 						break;
+					case "id":
+						$id = $argument[2];
+						break;
 					default:
 						$additional_list[$argument[1]] = $argument[2];
 				}
@@ -1217,11 +1221,16 @@ class TemplateSelect extends TemplateBlockElement
 			throw new TemplateEvaluationException("No name was specified for a select element.");
 		}
 		
+		if(empty($id))
+		{
+			$id = "form_{$group}_{$name}";
+		}
+		
 		$this->name = $name;
 		
 		$final_list = array(
 			"name=\"{$name}\"",
-			"id=\"form_{$group}_{$name}\""
+			"id=\"{$id}\""
 		);
 		
 		foreach($additional_list as $key => $value)
