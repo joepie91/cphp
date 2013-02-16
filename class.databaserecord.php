@@ -226,76 +226,87 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		
 		$original_value = $this->uData[$column_name];
 		
-		switch($type)
-		{
-			case "string":
-				$value = htmlspecialchars(stripslashes($original_value));
-				$variable_type = CPHP_VARIABLE_SAFE;
-				break;
-			case "html":
-				$value = filter_html(stripslashes($original_value));
-				$variable_type = CPHP_VARIABLE_SAFE;
-				break;
-			case "simplehtml":
-				$value = filter_html_strict(stripslashes($original_value));
-				$variable_type = CPHP_VARIABLE_SAFE;
-				break;
-			case "nl2br":
-				$value = nl2br(htmlspecialchars(stripslashes($original_value)), false);
-				$variable_type = CPHP_VARIABLE_SAFE;
-				break;
-			case "numeric":
-				$value = (is_numeric($original_value)) ? $original_value : 0;
-				$variable_type = CPHP_VARIABLE_SAFE;
-				break;
-			case "timestamp":
-				$value = unix_from_mysql($original_value);
-				$variable_type = CPHP_VARIABLE_SAFE;
-				break;
-			case "boolean":
-				$value = (empty($original_value)) ? false : true;
-				$variable_type = CPHP_VARIABLE_SAFE;
-				break;
-			case "none":
-				$value = $original_value;
-				$variable_type = CPHP_VARIABLE_UNSAFE;
-				break;
-			default:
-				$found = false;
-				foreach(get_object_vars($cphp_config->class_map) as $class_type => $class_name)
-				{
-					if($type == $class_type)
-					{
-						try
-						{
-							$value = new $class_name($original_value);
-						}
-						catch (NotFoundException $e)
-						{
-							$e->field = $variable_name;
-							throw $e;
-						}
-						$variable_type = CPHP_VARIABLE_SAFE;
-						$found = true;
-					}
-				}
-				
-				if($found == false)
-				{
-					$classname = get_class($this);
-					throw new Exception("Cannot determine type of dataset ({$type}) passed on to {$classname}.BindDataset."); 
-					break;
-				}
-		}
-		
-		if($variable_type == CPHP_VARIABLE_SAFE)
+		if($original_value === "" && ($type == "timestamp" || $type == "numeric" || $type == "boolean"))
 		{
 			$variable_name_safe = "s" . $variable_name;
-			$this->$variable_name_safe = $value;
+			$this->$variable_name_safe = null;
+			
+			$variable_name_unsafe = "u" . $variable_name;
+			$this->$variable_name_unsafe = null;
 		}
-		
-		$variable_name_unsafe = "u" . $variable_name;
-		$this->$variable_name_unsafe = $original_value;
+		else
+		{
+			switch($type)
+			{
+				case "string":
+					$value = htmlspecialchars(stripslashes($original_value));
+					$variable_type = CPHP_VARIABLE_SAFE;
+					break;
+				case "html":
+					$value = filter_html(stripslashes($original_value));
+					$variable_type = CPHP_VARIABLE_SAFE;
+					break;
+				case "simplehtml":
+					$value = filter_html_strict(stripslashes($original_value));
+					$variable_type = CPHP_VARIABLE_SAFE;
+					break;
+				case "nl2br":
+					$value = nl2br(htmlspecialchars(stripslashes($original_value)), false);
+					$variable_type = CPHP_VARIABLE_SAFE;
+					break;
+				case "numeric":
+					$value = (is_numeric($original_value)) ? $original_value : 0;
+					$variable_type = CPHP_VARIABLE_SAFE;
+					break;
+				case "timestamp":
+					$value = unix_from_mysql($original_value);
+					$variable_type = CPHP_VARIABLE_SAFE;
+					break;
+				case "boolean":
+					$value = (empty($original_value)) ? false : true;
+					$variable_type = CPHP_VARIABLE_SAFE;
+					break;
+				case "none":
+					$value = $original_value;
+					$variable_type = CPHP_VARIABLE_UNSAFE;
+					break;
+				default:
+					$found = false;
+					foreach(get_object_vars($cphp_config->class_map) as $class_type => $class_name)
+					{
+						if($type == $class_type)
+						{
+							try
+							{
+								$value = new $class_name($original_value);
+							}
+							catch (NotFoundException $e)
+							{
+								$e->field = $variable_name;
+								throw $e;
+							}
+							$variable_type = CPHP_VARIABLE_SAFE;
+							$found = true;
+						}
+					}
+					
+					if($found == false)
+					{
+						$classname = get_class($this);
+						throw new Exception("Cannot determine type of dataset ({$type}) passed on to {$classname}.BindDataset."); 
+						break;
+					}
+			}
+			
+			if($variable_type == CPHP_VARIABLE_SAFE)
+			{
+				$variable_name_safe = "s" . $variable_name;
+				$this->$variable_name_safe = $value;
+			}
+			
+			$variable_name_unsafe = "u" . $variable_name;
+			$this->$variable_name_unsafe = $original_value;
+		}
 	}
 	
 	public function FillDefaults()
