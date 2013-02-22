@@ -632,6 +632,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		{
 			if($first_only === true)
 			{
+				/* TODO: Try to run the query with LIMIT 1 if only the first result is desired. */
 				return new static($result);
 			}
 			elseif(count($result->data) == 1)
