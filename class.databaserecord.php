@@ -44,6 +44,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function __get($name)
 	{
+		// TODO: Don't overwrite current value in uVariable when sVariable is requested and uVariable is already set.
+		
 		if($name[0] == "s" || $name[0] == "u")
 		{
 			$actual_name = substr($name, 1);
