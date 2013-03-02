@@ -30,6 +30,7 @@ class ConstructorException extends BaseException {}
 class MissingDataException extends BaseException {}
 class DatabaseException extends BaseException {}
 class TypeException extends BaseException {}
+class DeprecatedException extends BaseException {}
 
 class TemplateException extends Exception
 {

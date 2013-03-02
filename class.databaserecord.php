@@ -113,32 +113,15 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				{
 					$this->sId = (is_numeric($uDataSource)) ? $uDataSource : 0;
 					
-					if(strpos($this->fill_query, " :") === false)
+					/* Use PDO to fetch the object from the database. */
+					if($result = $database->CachedQuery($this->fill_query, array(":Id" => $this->sId), $this->query_cache))
 					{
-						/* Use mysql_* to fetch the object from the database. */
-						$query = sprintf($this->fill_query, $uDataSource);
-						if($result = mysql_query_cached($query, $this->query_cache))
-						{
-							$uDataSource = $result->data[0];
-						}
-						else
-						{
-							$classname = get_class($this);
-							throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.", 0, null, "");
-						}
+						$uDataSource = $result->data[0];
 					}
 					else
 					{
-						/* Use PDO to fetch the object from the database. */
-						if($result = $database->CachedQuery($this->fill_query, array(":Id" => $this->sId), $this->query_cache))
-						{
-							$uDataSource = $result->data[0];
-						}
-						else
-						{
-							$classname = get_class($this);
-							throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.", 0, null, "");
-						}
+						$classname = get_class($this);
+						throw new NotFoundException("Could not locate {$classname} {$uDataSource} in database.", 0, null, "");
 					}
 				}
 				else
@@ -377,20 +360,18 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		
 		if(!empty($this->verify_query))
 		{
+			if(strpos($this->verify_query, ":Id") === false)
+			{
+				throw new DeprecatedException("Support for mysql_* has been removed from CPHP. Please update your queries to be in CachedPDO-style.");
+			}
+			
 			if($this->sId == 0)
 			{
 				$insert_mode = CPHP_INSERTMODE_INSERT;
 			}
 			else
 			{
-				/* Temporary implementation to make old style queries play nice with PDO code. */
-				if(strpos($this->verify_query, ":Id") !== false)
-				{
-					$this->verify_query = str_replace(":Id", "'%d'", $this->verify_query);
-				}
-				
-				$query = sprintf($this->verify_query, $this->sId);
-				if($result = mysql_query_cached($query, 0))
+				if($result = $database->CachedQuery($this->verify_query, array(":Id" => $this->sId), 0))
 				{
 					$insert_mode = CPHP_INSERTMODE_UPDATE;
 				}
@@ -425,7 +406,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			}
 			
 			$sKeyList = array();
-			$sValueList = array();
+			$sKeyIdentifierList = array();
+			$uValueList = array();
 			
 			foreach($element_list as $sKey => $value)
 			{				
@@ -437,46 +419,46 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 					switch($value['type'])
 					{
 						case "none":
-							$sFinalValue = mysql_real_escape_string($this->$variable_name_unsafe);
+							$uFinalValue = $this->$variable_name_unsafe;
 							break;
 						case "numeric":
 							$number = (isset($this->$variable_name_unsafe)) ? $this->$variable_name_unsafe : $this->$variable_name_safe;
-							$sFinalValue = (is_numeric($number)) ? $number : 0;
+							$uFinalValue = (is_numeric($number)) ? $number : 0;
 							break;
 						case "boolean":
 							$bool = (isset($this->$variable_name_unsafe)) ? $this->$variable_name_unsafe : $this->$variable_name_safe;
-							$sFinalValue = ($bool) ? "1" : "0";
+							$uFinalValue = ($bool) ? "1" : "0";
 							break;
 						case "timestamp":
 							if(is_numeric($this->$variable_name_unsafe))
 							{
-								$sFinalValue = mysql_from_unix($this->$variable_name_unsafe);
+								$uFinalValue = mysql_from_unix($this->$variable_name_unsafe);
 							}
 							else
 							{
 								if(isset($this->$variable_name_safe))
 								{
-									$sFinalValue = mysql_from_unix($this->$variable_name_safe);
+									$uFinalValue = mysql_from_unix($this->$variable_name_safe);
 								}
 								else
 								{
-									$sFinalValue = mysql_from_unix(unix_from_local($this->$variable_name_unsafe));
+									$uFinalValue = mysql_from_unix(unix_from_local($this->$variable_name_unsafe));
 								}
 							}
 							break;
 						case "string":
-							$sFinalValue = (isset($this->$variable_name_unsafe)) ? mysql_real_escape_string($this->$variable_name_unsafe) : mysql_real_escape_string($this->$variable_name_safe);
+							$uFinalValue = (isset($this->$variable_name_unsafe)) ? $this->$variable_name_unsafe : $this->$variable_name_safe;
 							break;
 						case "default":
-							$sFinalValue = mysql_real_escape_string($this->$variable_name_unsafe);
+							$uFinalValue = $this->$variable_name_unsafe;
 							break;
 					}
 					
-					$sFinalValue = "'{$sFinalValue}'";
-					$sKey = "`{$sKey}`";
+					$sIdentifier = ":{$sKey}";
 					
-					$sKeyList[] = $sKey;
-					$sValueList[] = $sFinalValue;
+					$sKeyList[] = "`{$sKey}`";
+					$sKeyIdentifierList[] = $sIdentifier;
+					$uValueList[$sIdentifier] = $uFinalValue;
 				}
 				else
 				{
@@ -492,48 +474,42 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			if($insert_mode == CPHP_INSERTMODE_INSERT)
 			{
 				$sQueryKeys = implode(", ", $sKeyList);
-				$sQueryValues = implode(", ", $sValueList);
-				$query = "INSERT INTO {$this->table_name} ({$sQueryKeys}) VALUES ({$sQueryValues})";
+				$sQueryKeyIdentifiers = implode(", ", $sKeyIdentifierList);
+				$query = "INSERT INTO {$this->table_name} ({$sQueryKeys}) VALUES ({$sQueryKeyIdentifiers})";
 			}
 			elseif($insert_mode == CPHP_INSERTMODE_UPDATE)
 			{
-				$sKeyValueList = array();
+				$sKeysIdentifiersList = array();
 				
 				for($i = 0; $i < count($sKeyList); $i++)
 				{
 					$sKey = $sKeyList[$i];
-					$sValue = $sValueList[$i];
-					$sKeyValueList[] = "{$sKey} = {$sValue}";
+					$sValue = $sKeyIdentifierList[$i];
+					$sKeysIdentifiersList[] = "{$sKey} = {$sValue}";
 				}
 				
-				$sQueryKeysValues = implode(", ", $sKeyValueList);
-				$query = "UPDATE {$this->table_name} SET {$sQueryKeysValues} WHERE `{$this->id_field}` = '{$this->sId}'";
+				$sQueryKeysIdentifiers = implode(", ", $sKeysIdentifiersList);
+				$query = "UPDATE {$this->table_name} SET {$sQueryKeysIdentifiers} WHERE `{$this->id_field}` = '{$this->sId}'";
 			}
 			
-			if($result = mysql_query_cached($query, 0, "", true))
+			try
 			{
+				$result = $database->CachedQuery($query, $uValueList, 0);
+				
 				if($insert_mode == CPHP_INSERTMODE_INSERT)
 				{
-					/* Temporary PDO implementation. */
-					if(!empty($cphp_config->database->pdo))
-					{
-						$this->sId = $database->lastInsertId();
-					}
-					else
-					{
-						$this->sId = mysql_insert_id();
-					}
+					$this->sId = $database->lastInsertId();
 				}
 				
 				$this->RefreshData();
 				
 				return $result;
 			}
-			else
+			catch (DatabaseException $e)
 			{
 				$classname = get_class($this);
-				var_dump($database->errorInfo());
-				throw new DatabaseException("Database insertion query failed in object of type {$classname}. Error message: " . mysql_error());
+				$error = $database->errorInfo();
+				throw new DatabaseException("Database insertion query failed in object of type {$classname}. Error message: " . $error[3]);
 			}
 		}
 		else
