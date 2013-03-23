@@ -38,7 +38,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			die("No class map was specified. Refer to the CPHP manual for instructions.");
 		}
 		
-		$this->ConstructDataset($uDataSource, $defaultable);
+		$this->ConstructDataset($uDataSource);
 		$this->EventConstructed();
 	}
 	
@@ -77,7 +77,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	public function RefreshData()
 	{
 		$this->PurgeCache();
-		$this->ConstructDataset($this->sId);
+		$this->ConstructDataset($this->sId, 0);
 		
 		if($this->autoloading === true)
 		{
@@ -89,17 +89,17 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	{
 		foreach($this->prototype as $type => $dataset)
 		{
-			foreach($dataset as $field)
+			foreach($dataset as $key => $field)
 			{
-				$variable_name_safe = "s" . $field;
-				$variable_name_unsafe = "u" . $field;
+				$variable_name_safe = "s" . $key;
+				$variable_name_unsafe = "u" . $key;
 				unset($this->$variable_name_safe);
 				unset($this->$variable_name_unsafe);
 			}
 		}
 	}
 	
-	public function ConstructDataset($uDataSource, $defaultable = null)
+	public function ConstructDataset($uDataSource, $expiry = -1)
 	{
 		global $database;
 		
@@ -112,9 +112,10 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				if(!empty($this->fill_query))
 				{
 					$this->sId = (is_numeric($uDataSource)) ? $uDataSource : 0;
+					$expiry = ($expiry == -1) ? $this->query_cache : $expiry;
 					
 					/* Use PDO to fetch the object from the database. */
-					if($result = $database->CachedQuery($this->fill_query, array(":Id" => $this->sId), $this->query_cache))
+					if($result = $database->CachedQuery($this->fill_query, array(":Id" => $this->sId), $expiry))
 					{
 						$uDataSource = $result->data[0];
 					}

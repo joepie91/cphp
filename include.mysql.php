@@ -108,7 +108,7 @@ class CachedPDO extends PDO
 				throw new DatabaseException("The query failed.", 0, null, array('query' => $query, 'parameters' => $parameters));
 			}
 		}
-			
+		
 		return $return_object;
 	}
 	
