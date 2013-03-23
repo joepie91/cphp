@@ -543,24 +543,13 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function PurgeCache()
 	{
-		if(strpos($this->fill_query, ":Id") !== false)
-		{
-			$fill_query = str_replace(":Id", "'%d'", $this->fill_query);
-		}
-		else
-		{
-			$fill_query = $this->fill_query;
-		}
-		
-		$query = sprintf($fill_query, $this->sId);
-		$key = md5($query) . md5($query . "x");
+		$parameters = array(":Id" => (string) $this->sId);
 		
 		$query_hash = md5($this->fill_query);
-		$parameter_hash = md5(serialize(array(':Id' => (int) $this->sId)));
-		$pdo_key = $query_hash . $parameter_hash;
+		$parameter_hash = md5(serialize($parameters));
+		$cache_hash = $query_hash . $parameter_hash;
 		
-		mc_delete($key);
-		mc_delete($pdo_key);
+		mc_delete($cache_hash);
 	}
 	
 	public function RenderTemplate($template = "")

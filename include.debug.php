@@ -221,7 +221,7 @@ function cphp_debug_display($data)
 				function createElements(source, key, hierarchy)
 				{
 					var item;
-					var id = hierarchy + "_" + key;
+					var id = hierarchy + "_" + key.replace(/[^a-z0-9_]/gi,'');
 					
 					if($.isArray(source))
 					{
@@ -250,7 +250,7 @@ function cphp_debug_display($data)
 				function updateElements(source, key, hierarchy)
 				{
 					var item;
-					var id = hierarchy + "_" + key;
+					var id = hierarchy + "_" + key.replace(/[^a-z0-9_]/gi,'');
 					
 					if($.isArray(source))
 					{

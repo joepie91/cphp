@@ -38,6 +38,9 @@ class CachedPDO extends PDO
 {
 	public function CachedQuery($query, $parameters = array(), $expiry = 60)
 	{
+		/* TODO: Do type guessing before checking cache, so as to avoid
+		 *       different parameter hashes depending on input type for
+		 *       numbers. */
 		$query_hash = md5($query);
 		$parameter_hash = md5(serialize($parameters));
 		$cache_hash = $query_hash . $parameter_hash;
