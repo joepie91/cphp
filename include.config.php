@@ -20,7 +20,10 @@ if(empty($_CPHP_CONFIG))
 
 $cphp_config = json_decode(file_get_contents($_CPHP_CONFIG));
 
-if(json_last_error() != JSON_ERROR_NONE)
+if(function_exists("json_last_error"))
 {
-	die("Failed to parse CPHP configuration. Refer to the CPHP manual for instructions.");
+	if(json_last_error() != JSON_ERROR_NONE)
+	{
+		die("Failed to parse CPHP configuration. Refer to the CPHP manual for instructions.");
+	}
 }
