@@ -88,6 +88,16 @@ class CPHPRouter extends CPHPBaseClass
 								throw new InvalidArgumentException("Target is missing from CPHPRoute options element.");
 							}
 							
+							if(!empty($route_destination['methods']))
+							{
+								$sMethods = (!is_array($route_destination['methods'])) ? array($route_destination['methods']) : $route_destination['methods'];
+								
+								if(!in_array(strtolower($_SERVER['REQUEST_METHOD']), $sMethods))
+								{
+									continue;
+								}
+							}
+							
 							if(!isset($route_destination['authenticator']))
 							{
 								$authenticated = true;
