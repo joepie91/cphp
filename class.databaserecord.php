@@ -395,6 +395,9 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 						case "boolean":
 						case "timestamp":
 						case "string":
+						case "simplehtml":
+						case "html":
+						case "nl2br":
 							$element_list[$element_value] = array(
 								'key'	=> $element_key,
 								'type'	=> $type_key
@@ -448,6 +451,9 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 							}
 							break;
 						case "string":
+						case "simplehtml":
+						case "html":
+						case "nl2br":
 							$uFinalValue = (isset($this->$variable_name_unsafe)) ? $this->$variable_name_unsafe : $this->$variable_name_safe;
 							break;
 						case "default":
