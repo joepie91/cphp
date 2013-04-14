@@ -108,7 +108,8 @@ class CachedPDO extends PDO
 			else
 			{
 				/* The query failed. */
-				throw new DatabaseException("The query failed.", 0, null, array('query' => $query, 'parameters' => $parameters));
+				$err = $statement->errorInfo();
+				throw new DatabaseException("The query failed: {$err[2]}", 0, null, array('query' => $query, 'parameters' => $parameters));
 			}
 		}
 		
