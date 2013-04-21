@@ -371,6 +371,7 @@ function http_status_code($code)
 		414 => "Request-URI Too Large",
 		415 => "Unsupported Media Type",
 		418 => "I'm a teapot",
+		422 => "Unprocessable Entity",
 		500 => "Internal Server Error",
 		501 => "Not Implemented",
 		502 => "Bad Gateway",
