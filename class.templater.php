@@ -636,7 +636,7 @@ class TemplateElement
 				/* Traverse up the tree to find a provider for the specified variable. */
 				while(true)
 				{
-					if($target->context == $variable_name)
+					if(isset($target->context) && $target->context == $variable_name)
 					{
 						if(!is_array($target->context_item))
 						{
