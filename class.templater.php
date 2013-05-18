@@ -92,7 +92,7 @@ class NewTemplater
 			$template_cache[$template_name] = $this->template;
 		}
 		
-		if($template === false)
+		if($this->template === false)
 		{
 			throw new TemplateException("Failed to load template {$template_name}.");
 		}
@@ -163,7 +163,7 @@ class NewTemplater
 									'message'		=> "Stored final subconstruct",
 									'type'			=> $last_subconstruct[$current_level + 1],
 									'target_level'		=> $current_level + 1,
-									'current_tokens'	=> $block_tokens[$current_level + 1],
+									'current_tokens'	=> isset($block_tokens[$current_level + 1]) ? $block_tokens[$current_level + 1] : null,
 									'relevant_tokens'	=> $relevant_tokens,
 									'block_tokens'		=> $block_tokens,
 									'last_subconstruct'	=> $last_subconstruct,
@@ -307,7 +307,6 @@ class NewTemplater
 										'message'		=> "Found construct",
 										'type'			=> $construct_name,
 										'current_tokens'	=> $tokens,
-										'relevant_tokens'	=> $relevant_tokens,
 										'block_tokens'		=> $block_tokens,
 										'last_subconstruct'	=> $last_subconstruct,
 										'subconstructs'		=> $subconstructs,
@@ -450,7 +449,7 @@ class NewTemplater
 	
 	public function Evaluate($localized_strings, $data)
 	{
-		return $this->root->Evaluate($localized_strings, $data);
+		return $this->root->Evaluate(null, $localized_strings, $data);
 	}
 	
 	public static function RegisterVariableHook($name, $function)
@@ -552,7 +551,7 @@ class TemplateElement
 				/* Traverse up the tree to find the provider of this particular collection */
 				while(true)
 				{
-					if($target->context == $collection_name)
+					if(isset($target->context) && $target->context == $collection_name)
 					{
 						if(is_array($target->context_item))
 						{
@@ -1163,7 +1162,7 @@ class TemplateRoot extends TemplateBlockElement
 {
 	public $type = "root";
 	
-	public function Evaluate($localized_strings, $data)
+	public function Evaluate($parent, $localized_strings, $data)
 	{
 		$this->parent = null;
 		
