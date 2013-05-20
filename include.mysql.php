@@ -15,25 +15,6 @@ if($_CPHP !== true) { die(); }
 
 $cphp_mysql_connected = false;
 
-if(!empty($cphp_config->database->driver))
-{
-	if(empty($cphp_config->database->database))
-	{
-		die("No database was configured. Refer to the CPHP manual for instructions.");
-	}
-	
-	try
-	{
-		$database = new CachedPDO("mysql:host={$cphp_config->database->hostname};dbname={$cphp_config->database->database}", $cphp_config->database->username, $cphp_config->database->password);
-		$database->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_TO_STRING);
-		$cphp_mysql_connected = true;
-	}
-	catch (Exception $e)
-	{
-		die("Could not connect to the specified database. Refer to the CPHP manual for instructions.");
-	}
-}
-
 class CachedPDO extends PDO
 {
 	public function CachedQuery($query, $parameters = array(), $expiry = 60)
@@ -134,5 +115,24 @@ class CachedPDO extends PDO
 		{
 			return PDO::PARAM_STR;
 		}
+	}
+}
+
+if(!empty($cphp_config->database->driver))
+{
+	if(empty($cphp_config->database->database))
+	{
+		die("No database was configured. Refer to the CPHP manual for instructions.");
+	}
+	
+	try
+	{
+		$database = new CachedPDO("mysql:host={$cphp_config->database->hostname};dbname={$cphp_config->database->database}", $cphp_config->database->username, $cphp_config->database->password);
+		$database->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_TO_STRING);
+		$cphp_mysql_connected = true;
+	}
+	catch (Exception $e)
+	{
+		die("Could not connect to the specified database. Refer to the CPHP manual for instructions.");
 	}
 }
