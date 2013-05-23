@@ -557,7 +557,14 @@ class TemplateElement
 						{
 							if(is_null($operation))
 							{
-								return $target->context_item[$key_name];
+								if(isset($target->context_item[$key_name]))
+								{
+									return $target->context_item[$key_name];
+								}
+								else
+								{
+									throw new TemplateEvaluationException("The specified collection does not hold a variable named '{$key_name}'.");
+								}
 							}
 							elseif($operation == "isset")
 							{
