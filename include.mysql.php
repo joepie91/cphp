@@ -118,6 +118,10 @@ class CachedPDO extends PDO
 	
 	public function GuessType($value)
 	{
+		if(is_object($value))
+		{
+			throw new DatabaseException("Query parameters must be numeric, boolean, null, a string value, or something that can be auto-cast to a string. You provided an object.");
+		}
 		if(is_int($value))
 		{
 			return PDO::PARAM_INT;
