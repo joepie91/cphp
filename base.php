@@ -51,4 +51,9 @@ if(get_magic_quotes_gpc())
 	{
 		$var = stripslashes($var);
 	}
+	
+	foreach($_GET as &$var)
+	{
+		$var = stripslashes($var);
+	}
 }
