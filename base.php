@@ -53,7 +53,7 @@ foreach($cphp_config->components as $component)
 
 /* Detect whether the request URI and the $_GET array disagree on the
  * existence of GET parameters. */
-if(strpos($_SERVER['REQUEST_URI'], "?") && empty($_GET))
+if(strpos($_SERVER['REQUEST_URI'], "?") !== false && empty($_GET))
 {
 	/* Separate the protocol/host/path component from the query string. */
 	list($uri, $query) = explode("?", $_SERVER['REQUEST_URI'], 2);
