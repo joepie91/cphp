@@ -44,6 +44,30 @@ foreach($cphp_config->components as $component)
 	require("components/component.{$component}.php");
 }
 
+/* lighttpd (and perhaps some other HTTPds) won't pass on GET parameters
+ * when using the server.error-handler-404 directive that is required to
+ * use the CPHP router. This patch will try to detect such problems, and
+ * manually extract the GET data from the request URI. I admit, it's a
+ * bit of a hack, but there doesn't really seem to be a different way of
+ * solving this issue. */
+
+/* Detect whether the request URI and the $_GET array disagree on the
+ * existence of GET parameters. */
+if(strpos($_SERVER['REQUEST_URI'], "?") && empty($_GET))
+{
+	/* Separate the protocol/host/path component from the query string. */
+	list($uri, $query) = explode("?", $_SERVER['REQUEST_URI'], 2);
+	
+	/* Store the entire query string in the relevant $_SERVER variable -
+	 * lighttpds strange behaviour breaks this variable as well. */
+	$_SERVER['QUERY_STRING'] = $query;
+	
+	/* Finally, run the query string through PHPs own internal GET data
+	 * parser, and have it store the result in the $_GET variable. This
+	 * should yield an identical result to a well-functioning HTTPd. */
+	parse_str($query, $_GET);
+}
+
 if(get_magic_quotes_gpc())
 {
 	/* By default, get rid of all quoted variables. Magic quotes are evil. */
