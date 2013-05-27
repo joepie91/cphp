@@ -516,7 +516,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			{
 				$classname = get_class($this);
 				$error = $database->errorInfo();
-				throw new DatabaseException("Database insertion query failed in object of type {$classname}. Error message: " . $error[3]);
+				throw new DatabaseException("Database insertion query failed in object of type {$classname}. Error message: " . $error[2]);
 			}
 		}
 		else
