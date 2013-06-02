@@ -98,6 +98,8 @@ class CPHPRouter extends CPHPBaseClass
 								}
 							}
 							
+							$authenticated = false;
+							
 							if(!isset($route_destination['authenticator']))
 							{
 								$authenticated = true;
