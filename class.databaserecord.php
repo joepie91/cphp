@@ -29,7 +29,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public $sId = 0;
 	
-	public function __construct($uDataSource, $defaultable = null)
+	public function __construct($uDataSource = 0, $defaultable = null)
 	{
 		global $cphp_config;
 		
