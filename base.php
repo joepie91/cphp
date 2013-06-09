@@ -83,3 +83,20 @@ if(get_magic_quotes_gpc())
 		$var = stripslashes($var);
 	}
 }
+
+if(!empty($cphp_config->autoloader))
+{
+	function cphp_autoload_class($class_name) 
+	{
+		global $_APP;
+		
+		$class_name = str_replace("\\", "/", strtolower($class_name));
+		
+		if(file_exists("classes/{$class_name}.php"))
+		{
+			require_once("classes/{$class_name}.php");
+		}
+	}
+
+	spl_autoload_register('cphp_autoload_class');
+}
