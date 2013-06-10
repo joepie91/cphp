@@ -44,7 +44,7 @@ class CSRF
 	
 	public static function InsertTokens($input)
 	{
-		return preg_replace_callback("/<form[^>]*>(?!\s*<input name=\"_CPHP_CSRF)/i", "CSRF::GenerateReplacement", $input, 1);
+		return preg_replace_callback("/<form[^>]*>(?!\s*<input name=\"_CPHP_CSRF)/i", "CSRF::GenerateReplacement", $input);
 	}
 	
 	public static function VerifyToken()
