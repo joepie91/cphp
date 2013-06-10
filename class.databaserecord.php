@@ -318,8 +318,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 					$unsafe_default_value = "0";
 					break;
 				case "timestamp":
-					$safe_default_value = 0;
-					$unsafe_default_value = "1970-01-01 12:00:00";
+					$safe_default_value = null;
+					$unsafe_default_value = null;
 					break;
 				default:
 					continue 2;
@@ -516,7 +516,17 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			{
 				$classname = get_class($this);
 				$error = $database->errorInfo();
-				throw new DatabaseException("Database insertion query failed in object of type {$classname}. Error message: " . $error[2]);
+				
+				if(empty($error[2]))
+				{
+					$errmsg = $e->getMessage();
+				}
+				else
+				{
+					$errmsg = $error[2];
+				}
+				
+				throw new DatabaseException("Database insertion query failed in object of type {$classname}. Error message: " . $errmsg);
 			}
 		}
 		else
