@@ -57,14 +57,14 @@ class NewTemplater
 		$template_global_vars[$key] = $value;
 	}
 	
-	public static function Render($template_name, $localized_strings, $data)
+	public static function Render($template_name, $localized_strings, $data, $presets = array())
 	{
 		global $template_global_vars, $cphp_debug_enabled;
 		$data = array_merge($data, $template_global_vars);
 		
 		$templater = new NewTemplater();
 		$templater->Load($template_name);
-		$templater->Localize($localized_strings);
+		$templater->Localize($localized_strings);		
 		$templater->Parse();
 		
 		if($cphp_debug_enabled === true)
@@ -72,10 +72,23 @@ class NewTemplater
 			echo($templater->root->PrintDebug(0, true));
 		}
 		
+		if(!empty($presets))
+		{
+			foreach($presets as $preset_key => $preset_value)
+			{
+				$templater->SetPreset($preset_key, $preset_value);
+			}
+		}
+		
 		$result = $templater->Evaluate($localized_strings, $data);
 		$result = CSRF::InsertTokens($result);
 		
 		return $result;
+	}
+	
+	public function SetPreset($key, $value)
+	{
+		$this->presets[$key] = $value;
 	}
 	
 	public function Load($template_name)
@@ -208,7 +221,9 @@ class NewTemplater
 											'subconstruct_tokens'	=> $subconstruct_tokens
 										));
 										
-										$sub_elements[] = new TemplateParentSubconstruct(array(), $subconstruct['elements']);
+										$new_el = new TemplateParentSubconstruct(array(), $subconstruct['elements']);
+										$new_el->templater = $this;
+										$sub_elements[] = $new_el;
 									}
 									else
 									{
@@ -228,19 +243,25 @@ class NewTemplater
 											'subconstruct_tokens'	=> $subconstruct_tokens
 										));
 										
-										$sub_elements[] = new $sub_processor($subconstruct['tokens'], $subconstruct['elements']);
+										$new_el = new $sub_processor($subconstruct['tokens'], $subconstruct['elements']);
+										$new_el->templater = $this;
+										$sub_elements[] = $new_el;
 									}
 								}
 								
 								/* Create the actual element and add it to the stack with its subconstructs. */
 								$processor = $this->constructs['block'][$construct_name]['processor'];
-								$elements[$current_level][] = new $processor($block_tokens[$current_level], $sub_elements, true);
+								$new_el = new $processor($block_tokens[$current_level], $sub_elements, true);
+								$new_el->templater = $this;
+								$elements[$current_level][] = $new_el;
 							}
 							else
 							{
 								/* There were no subconstructs, so we can add a normal element to the stack. */
 								$processor = $this->constructs['block'][$construct_name]['processor'];
-								$elements[$current_level][] = new $processor($block_tokens[$current_level], $elements[$current_level + 1]);
+								$new_el = new $processor($block_tokens[$current_level], $elements[$current_level + 1]);
+								$new_el->templater = $this;
+								$elements[$current_level][] = $new_el;
 							}
 							
 							$elements[$current_level + 1] = array();
@@ -282,7 +303,9 @@ class NewTemplater
 								/* Add a new element to the stack for this construct. */
 								$found = true;
 								
-								$elements[$current_level][] = new $processor($tokens);
+								$new_el = new $processor($tokens);
+								$new_el->templater = $this;
+								$elements[$current_level][] = $new_el;
 								
 								break;
 							}
@@ -400,7 +423,9 @@ class NewTemplater
 						{
 							/* Apparently a false alarm - there were no matching constructs in the grammar.
 							 * Add the data as a raw data element and continue reading. */
-							$elements[$current_level][] = new TemplateRawData("{%{$buffer}}");
+							$new_el = new TemplateRawData("{%{$buffer}}");
+							$new_el->templater = this;
+							$elements[$current_level][] = $new_el;
 						}
 					}
 					
@@ -418,7 +443,9 @@ class NewTemplater
 				 * stack as raw data and switch to tag mode, as well as advancing
 				 * the pointer by one to accomodate the lookahead. */
 				 
-				$elements[$current_level][] = new TemplateRawData($buffer);
+				$new_el = new TemplateRawData($buffer);
+				$new_el->templater = $this;
+				$elements[$current_level][] = $new_el;
 				$buffer = '';
 				
 				$pos += 1;
@@ -431,9 +458,12 @@ class NewTemplater
 		}
 		
 		/* Add a raw data element to the stack with all remaining data in the buffer. */
-		$elements[0][] = new TemplateRawData($buffer);
+		$new_el = new TemplateRawData($buffer);
+		$new_el->templater = $this;
+		$elements[0][] = $new_el;
 		
 		$this->root = new TemplateRoot('', $elements[0]);
+		$this->root->templater = $this;
 	}
 	
 	private function Localize($strings)
@@ -1146,6 +1176,10 @@ class TemplateInput extends TemplateStandaloneElement
 		{
 			$val = str_replace('"', '\"', htmlspecialchars($_POST[$name]));
 		}
+		elseif(isset($this->templater->presets[$name]))
+		{
+			$val = str_replace('"', '\"', htmlspecialchars($this->templater->presets[$name]));
+		}
 		
 		if(empty($id))
 		{
@@ -1304,7 +1338,8 @@ class TemplateOption extends TemplateStandaloneElement
 		
 		$select_element = $this->TraverseUntil("select");
 		
-		if(!empty($_POST[$select_element->name]) && $_POST[$select_element->name] == $value)
+		if((!empty($_POST[$select_element->name]) && $_POST[$select_element->name] == $value) ||
+		   (!empty($this->templater->presets[$select_element->name]) && $this->templater->presets[$select_element->name] == $value))
 		{
 			$final_list[] = "selected=\"selected\"";
 		}
