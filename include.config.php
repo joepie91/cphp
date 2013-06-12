@@ -18,12 +18,16 @@ if(empty($_CPHP_CONFIG))
 	die("No valid CPHP configuration path was specified. Refer to the CPHP manual for instructions.");
 }
 
-$cphp_config = json_decode(file_get_contents($_CPHP_CONFIG));
+$confdata = @file_get_contents($_CPHP_CONFIG);
 
-if(function_exists("json_last_error"))
+if($confdata === false)
 {
-	if(json_last_error() != JSON_ERROR_NONE)
-	{
-		die("Failed to parse CPHP configuration. Refer to the CPHP manual for instructions.");
-	}
+	die("The specified CPHP configuration path was not found. Refer to the CPHP manual for instructions.");
+}
+
+$cphp_config = @json_decode($confdata);
+
+if(json_last_error() != JSON_ERROR_NONE)
+{
+	die("Failed to parse CPHP configuration. Refer to the CPHP manual for instructions.");
 }
