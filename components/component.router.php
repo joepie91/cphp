@@ -79,6 +79,7 @@ class CPHPRouter extends CPHPBaseClass
 					if(preg_match("/{$regex}/i", $requestpath, $matches))
 					{
 						$this->uParameters = $matches;
+						$this->uMethod = strtolower($_SERVER['REQUEST_METHOD']);
 						
 						if(is_array($route_destination))
 						{
@@ -92,7 +93,7 @@ class CPHPRouter extends CPHPBaseClass
 							{
 								$sMethods = (!is_array($route_destination['methods'])) ? array($route_destination['methods']) : $route_destination['methods'];
 								
-								if(!in_array(strtolower($_SERVER['REQUEST_METHOD']), $sMethods))
+								if(!in_array($this->uMethod, $sMethods))
 								{
 									continue;
 								}
