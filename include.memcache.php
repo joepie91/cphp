@@ -16,7 +16,7 @@ if($_CPHP !== true) { die(); }
 if(!empty($cphp_config->memcache->enabled))
 {
 	$cphp_memcache = new Memcache;
-	$cphp_memcache_established = $cphp_memcache->connect($cphp_config->memcache->hostname, $cphp_config->memcache->port);
+	$cphp_memcache_established = @$cphp_memcache->connect($cphp_config->memcache->hostname, $cphp_config->memcache->port);
 
 	if($cphp_memcache_established !== false)
 	{
