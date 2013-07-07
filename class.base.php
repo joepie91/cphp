@@ -20,7 +20,7 @@ class CPHPBaseClass
 	public function RenderTimeAgo($template, $property)
 	{
 		/* DEPRECATED: Please do not use this function if you can avoid it. 
-		 * A function offering similar functionality will be added soon. */
+		 * The time_ago function can now be used to accomplish the same. */
 		global $locale;
 		
 		$variable_name = "s{$property}";

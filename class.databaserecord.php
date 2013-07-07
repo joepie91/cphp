@@ -44,7 +44,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function __get($name)
 	{
-		// TODO: Don't overwrite current value in uVariable when sVariable is requested and uVariable is already set.
+		/* TODO: Don't overwrite current value in uVariable when sVariable is requested and uVariable is already set. */
 		
 		if($name[0] == "s" || $name[0] == "u")
 		{
@@ -338,6 +338,10 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function DoRenderInternalTemplate()
 	{
+		/* DEPRECATED: Please do not use this function.
+		 * Class-specific templater functions have been discontinued. Instead, you can use
+		 * Templater::AdvancedParse for rendering templates without instantiating a Templater
+		 * yourself. */
 		if(!empty($this->render_template))
 		{
 			$strings = array();
@@ -561,7 +565,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	
 	public function RetrieveChildren($type, $field)
 	{
-		// Not done yet!
+		/* Probably won't ever be fully implemented, now that there is CreateFromQuery. */
 		
 		if(!isset($cphp_config->class_map->$type))
 		{
