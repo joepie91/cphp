@@ -355,7 +355,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		}
 	}
 	
-	public function InsertIntoDatabase()
+	public function InsertIntoDatabase($force_data = false)
 	{
 		global $cphp_config, $database;
 		
@@ -379,6 +379,29 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				else
 				{
 					$insert_mode = CPHP_INSERTMODE_INSERT;
+				}
+			}
+			
+			if($force_data === true)
+			{
+				foreach($this->prototype as $type_key => $type_value)
+				{
+					foreach($type_value as $element_key => $element_value)
+					{
+						$variable_name_unsafe = "u" . $element_key;
+						
+						if(!isset($this->$variable_name_unsafe))
+						{
+							foreach($this->prototype as $type => $dataset)
+							{
+								if(isset($dataset[$element_key]))
+								{
+									$column_name = $dataset[$element_key];
+									$this->$variable_name_unsafe = $this->uData[$column_name];
+								}
+							}
+						}
+					}
 				}
 			}
 			
