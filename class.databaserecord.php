@@ -523,7 +523,9 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				}
 				
 				$sQueryKeysIdentifiers = implode(", ", $sKeysIdentifiersList);
-				$query = "UPDATE {$this->table_name} SET {$sQueryKeysIdentifiers} WHERE `{$this->id_field}` = '{$this->sId}'";
+				/* We use :CPHPID here because it's unlikely to be used in the application itself. */
+				$query = "UPDATE {$this->table_name} SET {$sQueryKeysIdentifiers} WHERE `{$this->id_field}` = :CPHPID";
+				$uValueList[':CPHPID'] = $this->sId;
 			}
 			
 			try
