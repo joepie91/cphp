@@ -424,7 +424,7 @@ class NewTemplater
 							/* Apparently a false alarm - there were no matching constructs in the grammar.
 							 * Add the data as a raw data element and continue reading. */
 							$new_el = new TemplateRawData("{%{$buffer}}");
-							$new_el->templater = this;
+							$new_el->templater = $this;
 							$elements[$current_level][] = $new_el;
 						}
 					}

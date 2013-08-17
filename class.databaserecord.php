@@ -27,6 +27,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 	public $prototype_export = array();
 	public $uData = array();
 	
+	public $sIsNewObject = true;
+	
 	public $sId = 0;
 	
 	public function __construct($uDataSource = 0, $defaultable = null)
@@ -105,17 +107,36 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		
 		$bind_datasets = true;
 		
-		if(is_numeric($uDataSource))
+		if(is_object($uDataSource))
+		{
+			if(isset($uDataSource->data[0]))
+			{
+				$uDataSource = $uDataSource->data[0];
+			}
+			else
+			{
+				throw new NotFoundException("No result set present in object.");
+			}
+		}
+		elseif(is_array($uDataSource))
+		{
+			if(isset($uDataSource[0]))
+			{
+				$uDataSource = $uDataSource[0];
+			}
+		}
+		elseif(is_string($uDataSource) || is_numeric($uDataSource))
 		{
 			if($uDataSource != 0)
 			{
 				if(!empty($this->fill_query))
 				{
-					$this->sId = (is_numeric($uDataSource)) ? $uDataSource : 0;
+					/* TODO: Figure out a way to store the ID internally without post-processing... */
+					$this->sId = htmlspecialchars($uDataSource);
 					$expiry = ($expiry == -1) ? $this->query_cache : $expiry;
 					
 					/* Use PDO to fetch the object from the database. */
-					if($result = $database->CachedQuery($this->fill_query, array(":Id" => $this->sId), $expiry))
+					if($result = $database->CachedQuery($this->fill_query, array(":Id" => (string) $uDataSource), $expiry))
 					{
 						$uDataSource = $result->data[0];
 					}
@@ -137,24 +158,6 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				$this->FillDefaults();
 			}
 		}
-		elseif(is_object($uDataSource))
-		{
-			if(isset($uDataSource->data[0]))
-			{
-				$uDataSource = $uDataSource->data[0];
-			}
-			else
-			{
-				throw new NotFoundException("No result set present in object.");
-			}
-		}
-		elseif(is_array($uDataSource))
-		{
-			if(isset($uDataSource[0]))
-			{
-				$uDataSource = $uDataSource[0];
-			}
-		}
 		else
 		{
 			$classname = get_class($this);
@@ -163,7 +166,8 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		
 		if($bind_datasets === true)
 		{
-			$this->sId = (is_numeric($uDataSource[$this->id_field])) ? $uDataSource[$this->id_field] : 0;
+			$this->sId = htmlspecialchars($uDataSource[$this->id_field]);
+			$this->sIsNewObject = false;
 			
 			$this->uData = $uDataSource;
 			
@@ -370,12 +374,13 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				throw new DeprecatedException("Support for mysql_* has been removed from CPHP. Please update your queries to be in CachedPDO-style.");
 			}
 			
-			if($this->sId == 0)
+			if($this->sIsNewObject === true)
 			{
 				$insert_mode = CPHP_INSERTMODE_INSERT;
 			}
 			else
 			{
+				/* FIXME: This can probably be optimized... */
 				if($result = $database->CachedQuery($this->verify_query, array(":Id" => $this->sId), 0))
 				{
 					$insert_mode = CPHP_INSERTMODE_UPDATE;
@@ -535,6 +540,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 				if($insert_mode == CPHP_INSERTMODE_INSERT)
 				{
 					$this->sId = $database->lastInsertId();
+					$this->sIsNewObject = false;
 				}
 				
 				$this->RefreshData();
