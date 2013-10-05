@@ -512,6 +512,14 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 			
 			if($insert_mode == CPHP_INSERTMODE_INSERT)
 			{
+				if(!empty($this->uId))
+				{
+					$sIdentifier = ":{$this->id_field}";
+					$sKeyList[] = "`{$this->id_field}`";
+					$sKeyIdentifierList[] = $sIdentifier;
+					$uValueList[$sIdentifier] = $this->uId;
+				}
+				
 				$sQueryKeys = implode(", ", $sKeyList);
 				$sQueryKeyIdentifiers = implode(", ", $sKeyIdentifierList);
 				$query = "INSERT INTO {$this->table_name} ({$sQueryKeys}) VALUES ({$sQueryKeyIdentifiers})";
