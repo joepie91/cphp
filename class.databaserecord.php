@@ -127,7 +127,7 @@ abstract class CPHPDatabaseRecordClass extends CPHPBaseClass
 		}
 		elseif(is_string($uDataSource) || is_numeric($uDataSource))
 		{
-			if($uDataSource != 0)
+			if($uDataSource !== 0)
 			{
 				if(!empty($this->fill_query))
 				{
