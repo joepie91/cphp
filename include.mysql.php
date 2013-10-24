@@ -43,7 +43,7 @@ class CachedPDO extends PDO
 				{
 					$type = $this->GuessType($value);
 					
-					if(preg_match("/^[0-9]+$/", $value) && $type == PDO::PARAM_STR)
+					if(preg_match("/^[0-9]+$/", $value) && is_string($value))
 					{
 						/* PDO library apparently thinks it's part of a strongly typed language and doesn't do any typecasting.
 						 * We'll do it ourselves then. */
