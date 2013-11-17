@@ -868,28 +868,28 @@ class TemplateBlockElement extends TemplateElement
 			$left = $this->FetchVariable($left, $data);
 		}
 		
-		if($left == "true")
+		if($left === "true")
 		{
 			$left = true;
 		}
-		elseif($left == "false")
+		elseif($left === "false")
 		{
 			$left = false;
 		}
-		elseif($left == "null")
+		elseif($left === "null")
 		{
 			$left = null;
 		}
 		
-		if($right == "true")
+		if($right === "true")
 		{
 			$right = true;
 		}
-		elseif($right == "false")
+		elseif($right === "false")
 		{
 			$right = false;
 		}
-		elseif($right == "null")
+		elseif($right === "null")
 		{
 			$right = null;
 		}
