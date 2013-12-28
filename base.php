@@ -25,6 +25,7 @@ require("include.memcache.php");
 require("include.mysql.php");
 require("include.session.php");
 require("include.csrf.php");
+require("include.forms.php");
 
 require("include.lib.php");
 
