@@ -95,12 +95,14 @@ class CPHPFormValidatorPromiseBaseClass
 	public function Either($error_message)
 	{
 		$this->next = new CPHPFormValidatorOperatorEither($this, $error_message, array_slice(func_get_args(), 1));
+		$this->next->handler = $this->handler;
 		return $this->next;
 	}
 	
 	public function All($error_message)
 	{
 		$this->next = new CPHPFormValidatorOperatorAll($this, $error_message, array_slice(func_get_args(), 1));
+		$this->next->handler = $this->handler;
 		return $this->next;
 	}
 	
@@ -110,6 +112,7 @@ class CPHPFormValidatorPromiseBaseClass
 		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "required", "A value is required for this field.", $critical, function($key, $value, $args, $handler){
 			return isset($handler->formdata[$key]);
 		});
+		$this->next->handler = $this->handler;
 		return $this->next;
 	}
 	
@@ -118,6 +121,7 @@ class CPHPFormValidatorPromiseBaseClass
 		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "email", "The value is not a valid e-mail address.", $critical, function($key, $value, $args, $handler){
 			return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
 		});
+		$this->next->handler = $this->handler;
 		return $this->next;
 	}
 }
@@ -218,12 +222,12 @@ class CPHPFormValidatorOperatorEither extends CPHPFormValidatorOperator
 		
 		if(count($exceptions) == count($this->children))
 		{
-			$exceptions[] = array(
+			return array(array(
 				"type" => "operator",
 				"error_type" => "either",
 				"error_msg" => $this->error_message,
 				"children" => $exceptions
-			);
+			));
 		}
 		else
 		{
@@ -248,12 +252,12 @@ class CPHPFormValidatorOperatorAll extends CPHPFormValidatorOperator
 		
 		if(count($exceptions) > 0)
 		{
-			$exceptions[] = array(
+			return array(array(
 				"type" => "operator",
 				"error_type" => "both",
 				"error_msg" => $this->error_message,
 				"children" => $exceptions
-			);
+			));
 		}
 		else
 		{
