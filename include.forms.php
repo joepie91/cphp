@@ -41,9 +41,9 @@ class CPHPFormValidatorPromiseBaseClass
 	public function StartResolve()
 	{
 		/* Back and forth! */
-		if(is_null($this->previous) === true)
+		if($this->previous == $this->handler)
 		{
-			$this->next->ContinueResolve(array());
+			$this->ContinueResolve(array());
 		}
 		else
 		{
@@ -209,7 +209,7 @@ class CPHPFormValidatorOperatorEither extends CPHPFormValidatorOperator
 		$exceptions = array();
 		foreach($this->children as $child)
 		{
-			$result = $child->Resolve();
+			$result = $child->Resolve($exceptions);
 			if(is_null($result) === false)
 			{
 				$exceptions[] = $result;
@@ -239,7 +239,7 @@ class CPHPFormValidatorOperatorAll extends CPHPFormValidatorOperator
 		$exceptions = array();
 		foreach($this->children as $child)
 		{
-			$result = $child->Resolve($results);
+			$result = $child->Resolve($exceptions);
 			if(is_null($result) === false)
 			{
 				$exceptions[] = $result;
