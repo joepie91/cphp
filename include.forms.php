@@ -26,122 +26,243 @@ class FormValidationException extends Exception {
 	}
 }
 
-class CPHPFormValidator
+class ImmediateAbort extends FormValidationException { }
+
+class CPHPFormValidatorPromiseBaseClass
 {
-	public function GenerateResultObject($failed, $critical)
+	public $previous = null;
+	public $next = null;
+	
+	public function __construct($creator)
 	{
-		if($failed === true && $critical === true)
+		$this->previous = $creator;
+	}
+	
+	public function StartResolve()
+	{
+		/* Back and forth! */
+		if(is_null($this->previous) === true)
 		{
-			$object = new CPHPFormValidatorAbort();
+			$this->next->ContinueResolve(array());
 		}
 		else
 		{
-			$object = new CPHPFormValidatorResult();
+			$this->previous->StartResolve();
+		}
+	}
+	
+	public function ContinueResolve($results)
+	{
+		$own_result = $this->Resolve($results);
+		
+		if(is_null($own_result) === false)
+		{
+			$results[] = $own_result;
 		}
 		
-		$object->handler = $this->handler;
-		return $object;
-	}
-	
-	public function RequireKey($key, $critical = false)
-	{
-		return $this->ProcessSingleValidationResult($key, (!isset($this->handler->formdata[$key])), "required", "A value is required for this field.", $critical);
-	}
-	
-	public function ValidateEmail($key, $critical = false)
-	{
-		return $this->ProcessValidation($key, function($key, $value){
-			return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
-		}, "email", "The value is not a valid e-mail address.", $critical);
-	}
-	
-	public function ProcessValidation($key, $validator, $error_type, $error_message, $critical)
-	{
-		if(is_array($this->handler->formdata[$key]))
+		if(is_null($this->next) === false)
 		{
-			foreach($this->handler->formdata[$key] as $i => $value)
-			{
-				$result = $validator($key, $this->handler->formdata[$key], $this->handler);
-				$return_object = $this->ProcessArrayValueValidationResult($key, $i, $result, $error_type, $error_message, $critical);
-				
-				if($result !== true && $critical === true)
-				{
-					return $return_object;
-				}
-			}
-			
-			return $return_object;
+			$this->next->ContinueResolve($results);
 		}
 		else
 		{
-			$result = $validator($key, $this->handler->formdata[$key], $this->handler);
-			return $this->ProcessSingleValidationResult($key, $result, $error_type, $error_message, $critical);
+			$this->ValidationFinished($results);
 		}
 	}
 	
-	public function ProcessSingleValidationResult($key, $result, $error_type, $error_message, $critical)
+	public function ValidationFinished($results)
 	{
-		if($result === false)
+		if(count($results) > 0)
 		{
-			$this->handler->StoreValidationException(array(
-				"type" => "single",
-				"key" => $key,
-				"error_type" => $error_type,
-				"error_msg" => $error_message
-			));
-			$failed = true;
+			throw new FormValidationException("One or more validation steps failed.", $results);
 		}
-		else
-		{
-			$failed = false;
-		}
-		
-		return $this->GenerateResultObject($failed, $critical);
-	}
-	
-	public function ProcessArrayValueValidationResult($key, $i, $result, $error_type, $error_message, $critical)
-	{
-		if($result === false)
-		{
-			$this->handler->StoreValidationException(array(
-				"type" => "array_value",
-				"key" => $key,
-				"index" => $i,
-				"error_type" => $error_type,
-				"error_msg" => $error_message
-			), $this);
-			$failed = true;
-		}
-		else
-		{
-			$failed = false;
-		}
-		
-		return $this->GenerateResultObject($failed, $critical);
 	}
 	
 	public function Done()
 	{
-		$this->handler->RaiseValidationExceptions(false);
+		/* Trigger validation routine */
+		try
+		{
+			$this->StartResolve();
+		}
+		catch (ImmediateAbort $e)
+		{
+			throw new FormValidationException("A critical validation step failed.", $e->exceptions);
+		}
 	}
 	
-	public function Either()
+	/* Operators */
+	public function Either($error_message)
 	{
-		$statements = 
+		$this->next = new CPHPFormValidatorOperatorEither($this, $error_message, array_slice(func_get_args(), 1));
+		return $this->next;
 	}
 	
-	public function All()
+	public function All($error_message)
 	{
-		
+		$this->next = new CPHPFormValidatorOperatorAll($this, $error_message, array_slice(func_get_args(), 1));
+		return $this->next;
 	}
 	
-	public function ValidateIf($condition, $validation)
+	/* Validators */
+	public function RequireKey($key, $critical = false)
 	{
-		
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "required", "A value is required for this field.", $critical, function($key, $value, $args, $handler){
+			return isset($handler->formdata[$key]);
+		});
+		return $this->next;
+	}
+	
+	public function ValidateEmail($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "email", "The value is not a valid e-mail address.", $critical, function($key, $value, $args, $handler){
+			return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+		});
+		return $this->next;
 	}
 }
 
-class CPHPFormHandler extends CPHPFormValidator
+class CPHPFormValidatorPromise extends CPHPFormValidatorPromiseBaseClass
+{
+	public function __construct($creator, $handler, $key, $args, $error_type, $error_message, $critical, $function)
+	{
+		parent::__construct($creator);
+		$this->key = $key;
+		$this->func = $function;
+		$this->args = $args;
+		$this->error_type = $error_type;
+		$this->error_message = $error_message;
+		$this->critical = $critical;
+		$this->handler = $handler;
+	}
+	
+	public function Resolve($results)
+	{
+		$func = $this->func;  /* WTF PHP? Why can't I call $this->func directly? */
+		
+		$exceptions = array();
+		
+		$values = isset($this->handler->formdata[$this->key]) ? $this->handler->formdata[$this->key] : null;
+		
+		if(is_array($values) === true)
+		{
+			/* Array */
+			foreach($values as $i => $value)
+			{
+				if($func($this->key, $value, $this->args, $this->handler) !== true)
+				{
+					$exceptions[] = array(
+						"type" => "array_value",
+						"key" => $this->key,
+						"index" => $i,
+						"error_type" => $this->error_type,
+						"error_msg" => $this->error_message
+					);
+				}
+			}
+		}
+		else
+		{
+			/* Single value */
+			if($func($this->key, $values, $this->args, $this->handler) !== true)
+			{
+				$exceptions[] = array(
+					"type" => "single",
+					"key" => $this->key,
+					"error_type" => $this->error_type,
+					"error_msg" => $this->error_message
+				);
+			}
+		}
+		
+		if(count($exceptions) > 0 && $this->critical === true)
+		{
+			$results[] = $exceptions;
+			throw new ImmediateAbort("Critical validation did not pass.", $results);
+		}
+		
+		if(count($exceptions) == 0)
+		{
+			return null;
+		}
+		else
+		{
+			return $exceptions;
+		}
+	}
+}
+
+class CPHPFormValidatorOperator extends CPHPFormValidatorPromiseBaseClass
+{
+	public function __construct($creator, $error_message, $children)
+	{
+		parent::__construct($creator);
+		$this->error_message = $error_message;
+		$this->children = $children;
+	}
+}
+
+class CPHPFormValidatorOperatorEither extends CPHPFormValidatorOperator
+{
+	public function Resolve($results)
+	{
+		$exceptions = array();
+		foreach($this->children as $child)
+		{
+			$result = $child->Resolve();
+			if(is_null($result) === false)
+			{
+				$exceptions[] = $result;
+			}
+		}
+		
+		if(count($exceptions) == count($this->children))
+		{
+			$exceptions[] = array(
+				"type" => "operator",
+				"error_type" => "either",
+				"error_msg" => $this->error_message,
+				"children" => $exceptions
+			);
+		}
+		else
+		{
+			return null;
+		}
+	}
+}
+
+class CPHPFormValidatorOperatorAll extends CPHPFormValidatorOperator
+{
+	public function Resolve($results)
+	{
+		$exceptions = array();
+		foreach($this->children as $child)
+		{
+			$result = $child->Resolve($results);
+			if(is_null($result) === false)
+			{
+				$exceptions[] = $result;
+			}
+		}
+		
+		if(count($exceptions) > 0)
+		{
+			$exceptions[] = array(
+				"type" => "operator",
+				"error_type" => "both",
+				"error_msg" => $this->error_message,
+				"children" => $exceptions
+			);
+		}
+		else
+		{
+			return null;
+		}
+	}
+}
+
+class CPHPFormHandler extends CPHPFormValidatorPromiseBaseClass
 {
 	public function __construct($formdata = null, $no_csrf = false)
 	{
@@ -255,23 +376,5 @@ class CPHPFormHandler extends CPHPFormValidator
 		{
 			return $_POST[$key];
 		}
-	}
-}
-
-class CPHPFormValidatorResult extends CPHPFormValidator
-{
-	
-}
-
-class CPHPFormValidatorAbort
-{
-	public function Abort()
-	{
-		$this->handler->RaiseValidationExceptions(true);
-	}
-	
-	public function __get($anything)
-	{
-		return $this->Abort;
 	}
 }
