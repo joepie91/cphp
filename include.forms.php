@@ -78,19 +78,6 @@ class CPHPFormValidatorPromiseBaseClass
 		}
 	}
 	
-	public function Done()
-	{
-		/* Trigger validation routine */
-		try
-		{
-			$this->StartResolve();
-		}
-		catch (ImmediateAbort $e)
-		{
-			throw new FormValidationException("A critical validation step failed.", $e->exceptions);
-		}
-	}
-	
 	/* Operators */
 	public function Either($error_message)
 	{
@@ -104,6 +91,28 @@ class CPHPFormValidatorPromiseBaseClass
 		$this->next = new CPHPFormValidatorOperatorAll($this, $error_message, array_slice(func_get_args(), 1));
 		$this->next->handler = $this->handler;
 		return $this->next;
+	}
+	
+	/* Special instructions */
+	
+	public function AbortIfErrors()
+	{
+		$this->next = new CPHPFormValidatorAbortIfErrors($this, $this->handler);
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function Done()
+	{
+		/* Trigger validation routine */
+		try
+		{
+			$this->StartResolve();
+		}
+		catch (ImmediateAbort $e)
+		{
+			throw new FormValidationException("A critical validation step failed.", $e->exceptions);
+		}
 	}
 	
 	/* Validators */
@@ -193,6 +202,25 @@ class CPHPFormValidatorPromise extends CPHPFormValidatorPromiseBaseClass
 		{
 			return $exceptions;
 		}
+	}
+}
+
+class CPHPFormValidatorAbortIfErrors extends CPHPFormValidatorPromiseBaseClass
+{
+	public function __construct($creator, $handler)
+	{
+		parent::__construct($creator);
+		$this->handler = $handler;
+	}
+	
+	public function Resolve($results)
+	{
+		if(count($results) > 0)
+		{
+			throw new FormValidationException("One or more validation errors before an AbortIfErrors statement.", $results);
+		}
+		
+		return $results;
 	}
 }
 
