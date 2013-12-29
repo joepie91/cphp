@@ -19,10 +19,58 @@
 if($_CPHP !== true) { die(); }
 
 class FormValidationException extends Exception {
+	private function DoGetOffendingKeys($exceptions)
+	{
+		$results = array();
+		
+		foreach($exceptions as $exception)
+		{
+			if(isset($exception['key']))
+			{
+				$results[] = array(
+					"key" => $exception["key"],
+					"index" => isset($exception["index"]) ? $exception["index"] : 0
+				);
+			}
+			
+			if(isset($exception["children"]))
+			{
+				$results = array_merge($results, $this->DoGetOffendingKeys($exception["children"]));
+			}
+		}
+		
+		return $results;
+	}
+	
 	public function __construct($message, $exceptions)
 	{
 		$this->message = $message;
 		$this->exceptions = $exceptions;
+	}
+	
+	public function GetErrors()
+	{
+		/* We just need to return a flattened version of the exception list here. */
+		$results = array();
+		
+		foreach($this->exceptions as $exception_list)
+		{
+			$results = array_merge($results, $exception_list);
+		}
+		
+		return $results;
+	}
+	
+	public function GetOffendingKeys()
+	{
+		$results = array();
+		
+		foreach($this->exceptions as $exception_list)
+		{
+			$results = array_merge($results, $this->DoGetOffendingKeys($exception_list));
+		}
+		
+		return $results;
 	}
 }
 
@@ -125,11 +173,81 @@ class CPHPFormValidatorPromiseBaseClass
 		return $this->next;
 	}
 	
+	public function RequireNonEmpty($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "required", "The value for this field must not be empty.", $critical, function($key, $value, $args, $handler){
+			return trim($value) !== "";
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
 	public function ValidateEmail($key, $critical = false)
 	{
 		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "email", "The value is not a valid e-mail address.", $critical, function($key, $value, $args, $handler){
 			return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
 		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidateUrl($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "url", "The value is not a valid URL.", $critical, function($key, $value, $args, $handler){
+			return filter_var($value, FILTER_VALIDATE_URL) !== false;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidateIp($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "ip", "The value is not a valid IP address.", $critical, function($key, $value, $args, $handler){
+			return filter_var($value, FILTER_VALIDATE_IP) !== false;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidateIpv4($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "ip4", "The value is not a valid IPv4 address.", $critical, function($key, $value, $args, $handler){
+			return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidateIpv6($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "ip6", "The value is not a valid IPv6 address.", $critical, function($key, $value, $args, $handler){
+			return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidatePublicIp($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "ip_public", "The value is not an IP in a publicly usable range.", $critical, function($key, $value, $args, $handler){
+			return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidatePrivateIp($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "ip_private", "The value is not an IP in a private range.", $critical, function($key, $value, $args, $handler){
+			return (filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_NO_PRIV_RANGE) === false && filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE) !== false);
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidateCustom($key, $error_message, $validator, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "custom", $error_message, $critical, $validator);
 		$this->next->handler = $this->handler;
 		return $this->next;
 	}
@@ -182,6 +300,7 @@ class CPHPFormValidatorPromise extends CPHPFormValidatorPromiseBaseClass
 				$exceptions[] = array(
 					"type" => "single",
 					"key" => $this->key,
+					"index" => 0,
 					"error_type" => $this->error_type,
 					"error_msg" => $this->error_message
 				);
