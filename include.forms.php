@@ -245,6 +245,15 @@ class CPHPFormValidatorPromiseBaseClass
 		return $this->next;
 	}
 	
+	public function ValidateRegex($key, $error_message, $pattern, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array("pattern" => $pattern), "regex", $error_message, $critical, function($key, $value, $args, $handler){
+			return preg_match($args["pattern"], $value) === 1;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
 	public function ValidateCustom($key, $error_message, $validator, $critical = false)
 	{
 		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "custom", $error_message, $critical, $validator);
