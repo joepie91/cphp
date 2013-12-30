@@ -472,11 +472,13 @@ class CPHPFormHandler extends CPHPFormValidatorPromiseBaseClass
 		$this->validation_exceptions = array();
 	}
 	
-	public function GetGroupedValues($keys)
+	public function GetGroupedValues()
 	{
 		/* Returns an array of associative arrays. This is used for forms that have
 		 * multiple array inputs, and where each input has a corresponding element
 		 * for another input name. */
+		
+		$keys = func_get_args();
 		
 		$sCounts = array();
 		foreach($keys as $key)
