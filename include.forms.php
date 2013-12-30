@@ -505,17 +505,17 @@ class CPHPFormHandler extends CPHPFormValidatorPromiseBaseClass
 		/* Returns an array with zero or more values for the given key. If the key
 		 * does not exist, an empty array is returned. */
 		
-		if(!isset($_POST[$key]))
+		if(!isset($this->formdata[$key]))
 		{
 			return array();
 		}
-		elseif(is_array($_POST[$key]))
+		elseif(is_array($this->formdata[$key]))
 		{
-			return $_POST[$key];
+			return $this->formdata[$key];
 		}
 		else
 		{
-			return array($_POST[$key]);
+			return array($this->formdata[$key]);
 		}
 	}
 	
@@ -524,17 +524,17 @@ class CPHPFormHandler extends CPHPFormValidatorPromiseBaseClass
 		/* Returns a single value for the given key. If the key contains an array, it
 		 * will return the first element. If the key does not exist, it will return null. */
 		 
-		if(!isset($_POST[$key]))
+		if(!isset($this->formdata[$key]))
 		{
 			return null;
 		}
-		elseif(is_array($_POST[$key]))
+		elseif(is_array($this->formdata[$key]))
 		{
-			return $_POST[$key][0];
+			return $this->formdata[$key][0];
 		}
 		else
 		{
-			return $_POST[$key];
+			return $this->formdata[$key];
 		}
 	}
 }
