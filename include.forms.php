@@ -61,6 +61,20 @@ class FormValidationException extends Exception {
 		return $results;
 	}
 	
+	public function GetErrorMessages()
+	{
+		$flattened = $this->GetErrors();
+		
+		$results = array();
+		
+		foreach($flattened as $exception)
+		{
+			$results[] = $exception["error_msg"];
+		}
+		
+		return $results;
+	}
+	
 	public function GetOffendingKeys()
 	{
 		$results = array();

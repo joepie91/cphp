@@ -93,7 +93,7 @@ class NewTemplater
 	
 	public function Load($template_name)
 	{
-		global $template_cache;
+		global $template_cache, $cphp_config;
 		
 		if(isset($template_cache[$template_name]))
 		{
@@ -101,7 +101,8 @@ class NewTemplater
 		}
 		else
 		{
-			$this->template = file_get_contents("templates/{$template_name}.tpl");
+			$template_extension = (empty($cphp_config->templates->extension)) ? "tpl" : $cphp_config->templates->extension;
+			$this->template = file_get_contents("templates/{$template_name}.{$template_extension}");
 			$template_cache[$template_name] = $this->template;
 		}
 		
