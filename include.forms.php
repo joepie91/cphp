@@ -61,7 +61,7 @@ class FormValidationException extends Exception {
 		return $results;
 	}
 	
-	public function GetErrorMessages()
+	public function GetErrorMessages($custom_map = array())
 	{
 		$flattened = $this->GetErrors();
 		
@@ -69,7 +69,16 @@ class FormValidationException extends Exception {
 		
 		foreach($flattened as $exception)
 		{
-			$results[] = $exception["error_msg"];
+			if(!empty($custom_map) && array_key_exists($exception["error_type"], $custom_map) && array_key_exists($exception["key"], $custom_map[$exception["error_type"]]))
+			{
+				/* A custom error message was defined for this particular key/type error combination. */
+				$results[] = $custom_map[$exception["error_type"]][$exception["key"]];
+			}
+			else
+			{
+				/* Use default error message. */
+				$results[] = $exception["error_msg"];
+			}
 		}
 		
 		return $results;
