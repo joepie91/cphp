@@ -47,12 +47,17 @@ class CSRF
 		return preg_replace_callback("/<form[^>]*>(?!\s*<input name=\"_CPHP_CSRF)/i", "CSRF::GenerateReplacement", $input);
 	}
 	
-	public static function VerifyToken()
+	public static function VerifyToken($source = null)
 	{
-		if(!empty($_POST['_CPHP_CSRF_KEY']) && !empty($_POST['_CPHP_CSRF_TOKEN']))
+		if($source == null)
 		{
-			$key = $_POST['_CPHP_CSRF_KEY'];
-			$token = $_POST['_CPHP_CSRF_TOKEN'];
+			$source = $_POST;
+		}
+		
+		if(!empty($source['_CPHP_CSRF_KEY']) && !empty($source['_CPHP_CSRF_TOKEN']))
+		{
+			$key = $source['_CPHP_CSRF_KEY'];
+			$token = $source['_CPHP_CSRF_TOKEN'];
 			
 			if(empty($_SESSION['_CPHP_CSRF_KEYS'][$key]) || $_SESSION['_CPHP_CSRF_KEYS'][$key] != $token)
 			{

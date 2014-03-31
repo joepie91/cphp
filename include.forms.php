@@ -164,6 +164,20 @@ class CPHPFormValidatorPromiseBaseClass
 		return $this->next;
 	}
 	
+	public function Switch_($varname, $error_message)
+	{
+		$this->next = new CPHPFormValidatorOperatorSwitch($this, $varname, $error_message, array_slice(func_get_args(), 2));
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function Case_($value)
+	{
+		$this->next = new CPHPFormValidatorOperatorCase($this, $value, array_slice(func_get_args(), 1));
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
 	/* Special instructions */
 	
 	public function AbortIfErrors()
@@ -209,6 +223,15 @@ class CPHPFormValidatorPromiseBaseClass
 	{
 		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "email", "The value is not a valid e-mail address.", $critical, function($key, $value, $args, $handler){
 			return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidateNumeric($key, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array(), "numeric", "The value is not numeric.", $critical, function($key, $value, $args, $handler){
+			return is_numeric($value) !== false;
 		});
 		$this->next->handler = $this->handler;
 		return $this->next;
@@ -272,6 +295,22 @@ class CPHPFormValidatorPromiseBaseClass
 	{
 		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array("pattern" => $pattern), "regex", $error_message, $critical, function($key, $value, $args, $handler){
 			return preg_match($args["pattern"], $value) === 1;
+		});
+		$this->next->handler = $this->handler;
+		return $this->next;
+	}
+	
+	public function ValidateValue($key, $error_message, $values, $critical = false)
+	{
+		$this->next = new CPHPFormValidatorPromise($this, $this->handler, $key, array("values" => $values), "value", $error_message, $critical, function($key, $value, $args, $handler){
+			if(is_array($args["values"]))
+			{
+				return in_array($value, $args["values"]);
+			}
+			else
+			{
+				return ($args["values"] == $value);
+			}
 		});
 		$this->next->handler = $this->handler;
 		return $this->next;
@@ -364,14 +403,16 @@ class CPHPFormValidatorAbortIfErrors extends CPHPFormValidatorPromiseBaseClass
 		$this->handler = $handler;
 	}
 	
-	public function Resolve($results)
+	public function Resolve($exceptions)
 	{
-		if(count($results) > 0)
+		if(count($exceptions) > 0)
 		{
-			throw new FormValidationException("One or more validation errors before an AbortIfErrors statement.", $results);
+			throw new FormValidationException("One or more validation errors before an AbortIfErrors statement.", $exceptions);
 		}
-		
-		return $results;
+		else
+		{
+			return null;
+		}
 	}
 }
 
@@ -445,6 +486,95 @@ class CPHPFormValidatorOperatorAll extends CPHPFormValidatorOperator
 	}
 }
 
+class CPHPFormValidatorOperatorSwitch extends CPHPFormValidatorOperator
+{
+	/* The 'case' operator has a different constructor; it needs to accept both
+	 * an error message, and a variable to check. */
+	public function __construct($creator, $varname, $error_message, $children)
+	{
+		$this->varname = $varname;
+		parent::__construct($creator, $error_message, $children);
+	}
+	
+	public function Resolve($results)
+	{
+		$exceptions = array();
+		foreach($this->children as $child)
+		{
+			/* We have to set the variable name in the child here... only at
+			 * runtime can we establish the link between parent and child. */
+			$child->varname = $this->varname;
+			$result = $child->Resolve($exceptions);
+			if(is_null($result) === false)
+			{
+				$exceptions[] = $result;
+			}
+		}
+		
+		if(count($exceptions) > 0)
+		{
+			return array(array(
+				"type" => "operator",
+				"error_type" => "switch",
+				"error_msg" => $this->error_message,
+				"children" => $exceptions
+			));
+		}
+		else
+		{
+			return null;
+		}
+	}
+}
+
+class CPHPFormValidatorOperatorCase extends CPHPFormValidatorOperator
+{
+	/* The 'case' operator has a different constructor; instead of an error message,
+	 * it is passed a "trigger value"; that is, the value on which it will execute. */
+	public function __construct($creator, $value, $children)
+	{
+		/* FIXME: Check if the parent really is a Switch operator... */
+		/* Grab the variable name to check from the parent. */
+		$this->value = $value;
+		parent::__construct($creator, "", $children);
+	}
+	
+	public function Resolve($results)
+	{
+		if(in_array($this->value, $this->handler->GetValues($this->varname)))
+		{
+			$exceptions = array();
+			foreach($this->children as $child)
+			{
+				$result = $child->Resolve($exceptions);
+				if(is_null($result) === false)
+				{
+					$exceptions[] = $result;
+				}
+			}
+			
+			if(count($exceptions) > 0)
+			{
+				return array(array( /* TODO: Unpack case errors upon handling? Insignificant wrapper.. */
+					"type" => "operator",
+					"error_type" => "case",
+					"error_msg" => "Errors occurred.",
+					"children" => $exceptions
+				));
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			/* Case didn't trigger; always treat as success in that case. */
+			return null;
+		}
+	}
+}
+
 class CPHPFormHandler extends CPHPFormValidatorPromiseBaseClass
 {
 	public function __construct($formdata = null, $no_csrf = false)
@@ -463,6 +593,11 @@ class CPHPFormHandler extends CPHPFormValidatorPromiseBaseClass
 		$this->validation_exceptions = array();
 		$this->exception_buffer = array();
 		$this->first_validation = true;
+		
+		if($no_csrf === false)
+		{
+			CSRF::VerifyToken($this->formdata);
+		}
 	}
 	
 	public function StoreValidationException($exception, $validator_object)
@@ -544,14 +679,14 @@ class CPHPFormHandler extends CPHPFormValidatorPromiseBaseClass
 		}
 	}
 	
-	public function GetValue($key)
+	public function GetValue($key, $default=null)
 	{
 		/* Returns a single value for the given key. If the key contains an array, it
 		 * will return the first element. If the key does not exist, it will return null. */
 		 
 		if(!isset($this->formdata[$key]))
 		{
-			return null;
+			return $default;
 		}
 		elseif(is_array($this->formdata[$key]))
 		{

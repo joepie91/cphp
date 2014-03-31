@@ -101,3 +101,101 @@ if(!empty($cphp_config->autoloader))
 
 	spl_autoload_register('cphp_autoload_class');
 }
+
+set_exception_handler(function($e){
+	/* Intentionally not using the templater here; any inner exceptions
+	 * cause serious debugging issues. Avoiding potential issues by just
+	 * hardcoding the response here, with no code that could raise an
+	* exception. */
+	$exception_class = get_class($e);
+	$exception_message = $e->getMessage();
+	$exception_file = $e->getFile();
+	$exception_line = $e->getLine();
+	$exception_trace = $e->getTraceAsString();
+	
+	error_log("Uncaught {$exception_class} in {$exception_file}:{$exception_line} ({$exception_message}). Traceback: {$exception_trace}");
+	
+	switch(strtolower(ini_get('display_errors')))
+	{
+		case "1":
+		case "on":
+		case "true":
+			$error_body = "
+				<p>
+					An uncaught <span class='detail'>{$exception_class}</span> was thrown, in <span class='detail'>{$exception_file}</span> on line <span class='detail'>{$exception_line}</span>.
+				</p>
+				<p>
+					<span class='message'>{$exception_message}</span>
+				</p>
+				<pre>{$exception_trace}</pre>
+				<p><strong>Important:</strong> These errors should never be displayed on a production server! Make sure that <em>display_errors</em> is turned off in your PHP configuration, if you want to hide these tracebacks.</p>
+			";
+			break;
+		default:
+			$error_body = "
+				<p>
+					Something went wrong while creating this page, but we're not yet quite sure what it was.
+				</p>
+				<p>
+					If the issue persists, please contact the administrator for this application or website.
+				</p>
+			";
+			break;
+	}
+
+	echo("
+		<!doctype html>
+		<html>
+			<head>
+				<title>An unexpected error occurred.</title>
+				<style>
+					body
+					{
+						margin: 24px auto;
+						padding: 24px 16px;
+						font-family: sans-serif;
+						font-size: 18px;
+						width: 960px;
+						color: #676767;
+					}
+					
+					h1
+					{
+						border-bottom: 2px solid black;
+						color: #444444;
+						font-size: 26px;
+						padding-bottom: 6px;
+					}
+					
+					pre
+					{
+						overflow: auto;
+						font-size: 13px;
+						color: black;
+						padding: 10px;
+						border: 1px solid gray;
+						border-radius: 6px;
+						background-color: #F8F8F8;
+					}
+					
+					.message
+					{
+						font-weight: bold;
+						color: #5B0000;
+					}
+					
+					.detail
+					{
+						color: black;
+					}
+				</style>
+			</head>
+			<body>
+				<h1>An unexpected error occurred.</h1>
+				{$error_body}
+			</body>
+		</html>
+	");
+	
+	die();
+});
