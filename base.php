@@ -120,6 +120,42 @@ set_exception_handler(function($e){
 		case "1":
 		case "on":
 		case "true":
+			$inner_exceptions = array();
+			$inner_e = $e;
+			
+			while(true)
+			{
+				$inner_e = $inner_e->getPrevious();
+				
+				if($inner_e === null)
+				{
+					break;
+				}
+				else
+				{
+					$inner_exceptions[] = array($inner_e->getMessage(), $inner_e->getTraceAsString());
+				}
+			}
+			
+			if(empty($inner_exceptions))
+			{
+				$inner_traces = "";
+			}
+			else
+			{
+				$inner_traces = "<h2>One or more previous exceptions were also recorded.</h2>";
+			}
+			
+			foreach($inner_exceptions as $inner_e)
+			{
+				$inner_traces .= "
+					<p>
+						<span class='message'>{$inner_e[0]}</span>
+					</p>
+					<pre>{$inner_e[1]}</pre>
+				";
+			}
+			
 			$error_body = "
 				<p>
 					An uncaught <span class='detail'>{$exception_class}</span> was thrown, in <span class='detail'>{$exception_file}</span> on line <span class='detail'>{$exception_line}</span>.
@@ -128,6 +164,7 @@ set_exception_handler(function($e){
 					<span class='message'>{$exception_message}</span>
 				</p>
 				<pre>{$exception_trace}</pre>
+				{$inner_traces}
 				<p><strong>Important:</strong> These errors should never be displayed on a production server! Make sure that <em>display_errors</em> is turned off in your PHP configuration, if you want to hide these tracebacks.</p>
 			";
 			break;
@@ -142,7 +179,9 @@ set_exception_handler(function($e){
 			";
 			break;
 	}
-
+	
+	http_status_code(500);
+	
 	echo("
 		<!doctype html>
 		<html>
@@ -165,6 +204,15 @@ set_exception_handler(function($e){
 						color: #444444;
 						font-size: 26px;
 						padding-bottom: 6px;
+					}
+					
+					h2
+					{
+						color: #575757;
+						border-bottom: 2px solid #444444;
+						padding-top: 22px;
+						padding-bottom: 6px;
+						font-size: 21px;
 					}
 					
 					pre
