@@ -13,14 +13,79 @@
 
 if($_CPHP !== true) { die(); }
 
-function random_string($length)
+function random_string($length, $insecure = false)
 {
-	$output = "";
-	for ($i = 0; $i < $length; $i++) 
-	{ 
-		$output .= substr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", mt_rand(0, 61), 1); 
+	/* This was changed to return cryptographically secure
+	 * random strings by default. The $insecure parameter
+	 * can be used to indicate that cryptographically insecure
+	 * (but faster) random data is desired. Note that, absent
+	 * a source for cryptographically secure random data,
+	 * this function will raise an exception. */
+	$required_bytes = ceil($length / 4) * 3; /* Accounting for base64 overhead */
+	$bytes = random_bytes($required_bytes, $insecure);
+	
+	/* Since we want a string, we will base64-encode the
+	 * resulting bytes, and then replace + and / with - and _
+	 * respectively. We'll also cut down on the amount of
+	 * bytes - since we're requesting bytes in chunks of 4,
+	 * we might have a few too many. */
+	return substr(str_replace("+", "-", str_replace("/", "_", base64_encode($bytes))), 0, $length);
+}
+
+function random_bytes($length, $insecure = false)
+{
+	if($insecure === true)
+	{
+		$output = "";
+		for ($i = 0; $i < $length; $i++) 
+		{ 
+			$output .= chr(mt_rand(0, 255));
+		}
+		return $output;
 	}
-	return $output;
+	else
+	{
+		$success = false;
+		
+		/* Prefer /dev/urandom if it is available. */
+		if(file_exists("/dev/urandom"))
+		{
+			$handle = fopen("/dev/urandom", "r");
+			$bytes = fread($handle, $length);
+			$success = true;
+		}
+		
+		/* Fall back to openssl_random_pseudo_bytes if it is available. */
+		if($success === false && function_exists("openssl_random_pseudo_bytes"))
+		{
+			$crypto_secure = false;
+			
+			$bytes = openssl_random_pseudo_bytes($length, $crypto_secure);
+			
+			if($crypto_secure === true)
+			{
+				$success = true;
+			}
+		}
+		
+		/* If we also don't have that, let's try mcrypt_create_iv... but only if
+		 * we are running on PHP 5.3, since it behaves unpredictably on
+		 * Windows in lower versions. */
+		if($success === false && function_exists("mcrypt_create_iv") && version_compare(phpversion(), "5.3", ">="))
+		{
+			$bytes = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
+			$success = true;
+		}
+		
+		/* There are no secure random data sources available. Fix your
+		 * system! */
+		if($success === false)
+		{
+			throw new Exception("No secure sources for random bytes found. Install the OpenSSL or mcrypt extension.");
+		}
+		
+		return $bytes;
+	}
 }
 
 function extract_globals()
