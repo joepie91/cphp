@@ -29,6 +29,8 @@ class PrototypeException extends BaseException {}
 class ConstructorException extends BaseException {}
 class MissingDataException extends BaseException {}
 class DatabaseException extends BaseException {}
+class DatabaseDuplicateException extends DatabaseException {}
+class DatabaseConstraintException extends DatabaseException {}
 class TypeException extends BaseException {}
 class DeprecatedException extends BaseException {}
 

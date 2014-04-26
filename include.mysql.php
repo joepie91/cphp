@@ -25,7 +25,7 @@ class CachedPDO extends PDO
 		$query_hash = md5($query);
 		$parameter_hash = md5(serialize($parameters));
 		$cache_hash = $query_hash . $parameter_hash;
-		
+
 		$return_object = new stdClass;
 		
 		if($expiry != 0 && $result = mc_get($cache_hash))
@@ -73,7 +73,7 @@ class CachedPDO extends PDO
 				if($result = $statement->fetchAll(PDO::FETCH_ASSOC))
 				{
 					if(count($result) > 0)
-					{
+					{	
 						if($expiry != 0)
 						{
 							mc_set($cache_hash, $result, $expiry);
@@ -89,16 +89,41 @@ class CachedPDO extends PDO
 				}
 				else
 				{
-					/* There were zero results. Return null instead of an object without results, to allow for statements
-					 * of the form if($result = $database->CachedQuery()) . */
-					return null;
+					$last_id = $this->lastInsertId();
+					
+					if($last_id == "0" || !starts_with(strtoupper($query), "INSERT"))
+					{
+						/* There were zero results. Return null instead of an object without results, to allow for statements
+						 * of the form if($result = $database->CachedQuery()) . */
+						return null;
+					}
+					else
+					{
+						/* This was an INSERT query. Return the primary ID of the created row. */
+						return $last_id;
+					}
 				}
 			}
 			else
 			{
 				/* The query failed. */
 				$err = $statement->errorInfo();
-				throw new DatabaseException("The query failed: {$err[2]}", 0, null, array('query' => $query, 'parameters' => $parameters));
+				
+				if($err[0] == "23000")
+				{
+					if(starts_with($err[2], "Duplicate entry")) /* There does not seem to be a better way of doing this. */
+					{
+						throw new DatabaseDuplicateException("The query failed because one of the keys was not unique: {$err[2]}", 0, null, array('query' => $query, 'parameters' => $parameters));
+					}
+					else
+					{
+						throw new DatabaseConstraintException("The query violates a database constraint: {$err[2]}", 0, null, array('query' => $query, 'parameters' => $parameters));
+					}
+				}
+				else
+				{
+					throw new DatabaseException("The query failed: {$err[2]}", 0, null, array('query' => $query, 'parameters' => $parameters));
+				}
 			}
 		}
 		
